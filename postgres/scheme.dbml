@@ -1,0 +1,72 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Table books {
+  id int pk [not null]
+  created_at timestampz [default: `now()`]
+  openlibrary_id varchar [unique, not null]
+  name varchar [not null]
+  author_id integer [not null, ref: > authors.id]
+  description text
+  first_publish_year int
+  editions int
+  num_pages int
+  }
+
+Enum BookStatus {
+  available
+  loaned
+  maintenance
+  lost
+}
+
+Enum Condition {
+  good
+  average
+  poor
+}
+
+Table book_copies {
+  id int pk [not null]
+  book_id integer [not null, ref: > books.id]
+  barcode varchar [unique, not null]
+  status BookStatus [not null, default: 'available']
+  condition Condition [not null, default: 'good']
+  acquired_at timestampz [default: `now()`]
+}
+
+Table authors {
+  id int pk [not null]
+  created_at timestampz [default: `now()`]
+  name varchar [not null]
+}
+
+Table genres {
+  id int pk [not null]
+  name varchar [unique, not null]
+  created_at timestampz [default: `now()`]
+}
+
+Table book_genres {
+  book_id int [ref: > books.id]
+  genre_id int [ref: > genres.id]
+  Indexes {
+    (book_id, genre_id) [pk]
+  }
+}
+
+Table users {
+  id int pk [not null]
+  cpf char(11) [unique, not null]
+  name varchar [not null]
+  created_at timestampz [default: `now()`]
+}
+
+Table book_loans {
+  id int pk [not null]
+  user_id int [ref: > users.id]
+  book_copy_id int [not null, ref: > book_copies.id]
+  loan_date timestampz [default: `now()`]
+  due_date timestampz
+  returned_at timestampz
+}

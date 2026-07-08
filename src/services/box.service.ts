@@ -1,30 +1,32 @@
 import { Result } from '../@common/result/result'
-import { Pokemon } from '../models/pokemon'
-import { BoxRepository } from '../repositories/domain/box.repository'
+import { Book } from '../models/Book'
+import { BookRepository } from '../repositories/domain/repository'
 
 export class BoxService {
-  constructor(private readonly boxRepository: BoxRepository) {}
+  constructor(private readonly bookRepository: BookRepository) {}
 
-  async list(): Promise<Pokemon[]> {
-    return this.boxRepository.list()
+  async list(): Promise<Book[]> {
+    return this.bookRepository.list()
   }
 
-  async add(pokemon: Pokemon): Promise<Result<void, 'duplicate'>> {
-    const box = await this.boxRepository.list()
+  async add(book: Book): Promise<Result<void, 'duplicate'>> {
+    const books = await this.bookRepository.list()
 
-    const isDuplicate = box.some((p) => p.id === pokemon.id)
+    const isDuplicate = books.some(
+      (p) => p.openLibraryId === book.openLibraryId
+    )
 
     if (isDuplicate) {
       return Result.fail('duplicate')
     }
 
-    await this.boxRepository.addPokemon(pokemon)
+    await this.bookRepository.addBook(book)
 
     return Result.void()
   }
 
   async remove(id: number): Promise<Result<void, 'not-found'>> {
-    const box = await this.boxRepository.list()
+    const box = await this.bookRepository.list()
 
     const exists = box.some((p) => p.id === id)
 
@@ -32,24 +34,8 @@ export class BoxService {
       return Result.fail('not-found')
     }
 
-    await this.boxRepository.removePokemon(id)
+    await this.bookRepository.removeBook(id)
 
     return Result.void()
-  }
-
-  async filter(criteria: { type?: string; name?: string }): Promise<Pokemon[]> {
-    const box = await this.boxRepository.list()
-
-    const { type, name } = criteria
-
-    return box.filter((p) => {
-      const typeMatch =
-        type === undefined || p.types.some((t) => t === type.toLowerCase())
-
-      const nameMatch =
-        name === undefined || p.name.includes(name.toLowerCase())
-
-      return typeMatch && nameMatch
-    })
   }
 }

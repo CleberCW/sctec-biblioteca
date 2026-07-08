@@ -11,7 +11,6 @@ export abstract class ConsoleView {
 
   private aborted = false
 
-  // OBS: O "correto" seria passar o readlineInterface como parâmetro, porém injeção de dependência manual é chato, então para casos excepcionais e simples uma propriedade estática resolve. Não é tão fácil de "mockar" como por injeção de dependência mas é possível.
   private readlineInterface = ReadlineInterfaceUtil.readlineInterface
 
   constructor(private readonly isRootView = false) {}

@@ -1,4 +1,7 @@
+import 'dotenv/config'
+
 import { NativeHttpService } from './@common/http/impl/native-http.service'
+import { initDatabase } from './config/db'
 import { BoxController } from './controllers/box.controller'
 import { PokeApiController } from './controllers/poke-api.controller'
 import { BoxFileRepository } from './repositories/box-file.repository'
@@ -7,6 +10,14 @@ import { PokeApiService } from './services/poke-api.service'
 import { BoxView } from './views/box.view'
 import { ExploreView } from './views/explore.view'
 import { MenuView } from './views/menu.view'
+
+initDatabase().catch((err: unknown) => {
+  if (err instanceof Error) {
+    console.error(err.message)
+  } else {
+    console.error('An unexpected error occurred', err)
+  }
+})
 
 function bootstrap() {
   const boxService = new BoxService(new BoxFileRepository())

@@ -1,15 +1,15 @@
-import { BoxView } from './books.view'
+import { BooksView } from './books.view'
 import { ConsoleView } from './console.view'
 
 export class MenuView extends ConsoleView {
   static readonly QUIT_SYMBOL = 'Q'
 
-  constructor(private readonly booksView: BoxView) {
+  constructor(private readonly booksView: BooksView) {
     super(true)
   }
 
   private readonly MENU_OPTIONS = {
-    '1': 'Listar Livros',
+    '1': 'Livros',
     '2': '...',
     [MenuView.QUIT_SYMBOL]: '🚪 Sair do Sistema'
   } as const

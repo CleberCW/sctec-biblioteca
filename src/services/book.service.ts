@@ -38,4 +38,17 @@ export class BookService {
 
     return Result.void()
   }
+
+  async getPage(page: number, pageSize: number) {
+    const offset = (page - 1) * pageSize
+
+    const books = await this.bookRepository.list(pageSize, offset)
+    const total = await this.bookRepository.count()
+
+    return {
+      books,
+      totalPages: Math.ceil(total / pageSize),
+      page
+    }
+  }
 }

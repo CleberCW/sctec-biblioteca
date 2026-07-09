@@ -1,52 +1,33 @@
 import { ConsoleView } from './console.view'
-import { BookController } from '../controllers/book.controller'
-import { Book } from '../models/Book'
+import { BooksListView } from './explorer.books.view'
 
-export class BoxView extends ConsoleView {
-  constructor(private readonly bookController: BookController) {
+export class BooksView extends ConsoleView {
+  constructor(private readonly booksListView: BooksListView) {
     super()
   }
 
-  private formatBooks(b: Book): string {
-    return `#${String(b.id)} - ${b.name} | OpenLibraryID: ${b.openLibraryId} | Autor: ${String(b.authorId)} | Descrição: ${(b.description ?? 'Sem descrição').slice(0, 50)}.`
-  }
-
-  private async handleList(): Promise<void> {
-    const result = await this.bookController.list()
-
-    this.display('=================================================')
-
-    if (result.length === 0) {
-      this.display('Nenhum livro encontrado.')
-    } else {
-      this.display('Foi encontrado livro')
-      result.forEach((b) => {
-        this.display(this.formatBooks(b))
-      })
-    }
-
-    this.display('=================================================')
-    await this.prompt('Pressione ENTER para continuar:')
-  }
-
   protected async update(): Promise<void> {
-    this.display('\n=== Gerenciar Box ===')
-    this.display('L. Listar Livros')
-    this.display('F. ...')
-    this.display('T. ...')
-    this.display('B. Sair')
+    this.display('\n=== Livros ===\n')
+    this.display('1. Pesquisar Livro')
+    this.display('2. Listar Livros')
+    this.display('3. Cadastrar Livro')
+    this.display('4. Remover Livro')
+    this.display('5. Sair')
+    this.display('\n==============\n')
 
     const option = await this.prompt('Escolha uma opção: ')
 
     switch (option.trim().toUpperCase()) {
-      case 'L':
-        await this.handleList()
+      case '1':
         break
-      case 'F':
+      case '2':
+        await this.booksListView.start()
         break
-      case 'T':
+      case '3':
         break
-      case 'B':
+      case '4':
+        break
+      case '5':
         this.exit()
         break
       default:

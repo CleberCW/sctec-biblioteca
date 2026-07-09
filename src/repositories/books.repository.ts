@@ -1,5 +1,3 @@
-import { QueryResult } from 'pg'
-
 import { pool } from '../config/db'
 import { BaseException } from '../errors/base.exception'
 import { BookRepository } from './domain/repository'
@@ -7,17 +5,36 @@ import { CreateBookDTO } from '../dtos/CreateBookDTO'
 import { Book } from '../models/Book'
 
 export class BooksPostgresRepository implements BookRepository {
-  async list(): Promise<Book[]> {
+  async list(pageSize = 0, offset = 10): Promise<Book[]> {
     try {
-      const result: QueryResult<Book> = await pool.query<Book>(
+      const result = await pool.query<Book>(
         `
-        SELECT *
-        FROM books
-        ORDER BY id;
-        `
+      SELECT *
+      FROM books
+      ORDER BY id
+      LIMIT $1 OFFSET $2;
+      `,
+        [pageSize, offset]
       )
 
       return result.rows
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'BOOKS: '
+      })
+    }
+  }
+
+  async count(): Promise<number> {
+    try {
+      const result = await pool.query<{ count: string }>(
+        `
+      SELECT COUNT(*) AS count
+      FROM books;
+      `
+      )
+
+      return Number(result.rows[0].count)
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'BOOKS: '

@@ -20,7 +20,7 @@ export class BooksPostgresRepository implements BookRepository {
       return result.rows
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
-        messagePrefix: 'SELECT BOXES: '
+        messagePrefix: 'BOOKS: '
       })
     }
   }

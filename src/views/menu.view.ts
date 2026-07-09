@@ -1,20 +1,16 @@
-import { BoxView } from './box.view'
+import { BoxView } from './books.view'
 import { ConsoleView } from './console.view'
-import { ExploreView } from './explore.view'
 
 export class MenuView extends ConsoleView {
   static readonly QUIT_SYMBOL = 'Q'
 
-  constructor(
-    private readonly exploreView: ExploreView,
-    private readonly boxView: BoxView
-  ) {
+  constructor(private readonly booksView: BoxView) {
     super(true)
   }
 
   private readonly MENU_OPTIONS = {
-    '1': '👾 Explorar / Capturar',
-    '2': '📦 Gerenciar Box',
+    '1': 'Listar Livros',
+    '2': '...',
     [MenuView.QUIT_SYMBOL]: '🚪 Sair do Sistema'
   } as const
 
@@ -39,17 +35,16 @@ export class MenuView extends ConsoleView {
 
     switch (option) {
       case '1':
-        await this.exploreView.start()
+        await this.booksView.start()
         break
       case '2':
-        await this.boxView.start()
         break
     }
   }
 
   private showMenu(): void {
     this.display('\n======================================')
-    this.display(' 🏛️  Exemplo de integração com PokeAPI  🏛️')
+    this.display(' 🏛️  Biblioteca  🏛️')
     this.display('======================================')
     Object.entries(this.MENU_OPTIONS).forEach(([key, value]) => {
       this.display(`${key}. ${value}`)

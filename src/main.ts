@@ -1,14 +1,10 @@
 import 'dotenv/config'
 
-import { NativeHttpService } from './@common/http/impl/native-http.service'
 import { initDatabase } from './config/db'
-import { BoxController } from './controllers/box.controller'
-import { PokeApiController } from './controllers/poke-api.controller'
-import { BoxFileRepository } from './repositories/box-file.repository'
-import { BoxService } from './services/box.service'
-import { PokeApiService } from './services/poke-api.service'
-import { BoxView } from './views/box.view'
-import { ExploreView } from './views/explore.view'
+import { BookController } from './controllers/book.controller'
+import { BooksPostgresRepository } from './repositories/books.repository'
+import { BookService } from './services/book.service'
+import { BoxView } from './views/books.view'
 import { MenuView } from './views/menu.view'
 
 initDatabase().catch((err: unknown) => {
@@ -20,14 +16,11 @@ initDatabase().catch((err: unknown) => {
 })
 
 function bootstrap() {
-  const boxService = new BoxService(new BoxFileRepository())
-  const boxController = new BoxController(boxService)
-  const pokeApiService = new PokeApiService(new NativeHttpService())
-  const pokeApiController = new PokeApiController(pokeApiService)
-  const boxView = new BoxView(boxController)
-  const exploreView = new ExploreView(pokeApiController, boxController)
+  const bookService = new BookService(new BooksPostgresRepository())
+  const bookController = new BookController(bookService)
+  const booksView = new BoxView(bookController)
 
-  const menuView = new MenuView(exploreView, boxView)
+  const menuView = new MenuView(booksView)
 
   return menuView.start()
 }

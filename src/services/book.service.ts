@@ -1,9 +1,9 @@
 import { Result } from '../@common/result/result'
 import { Book } from '../models/Book'
-import { BookRepository } from '../repositories/domain/repository'
+import { BooksPostgresRepository } from '../repositories/books.repository'
 
-export class BoxService {
-  constructor(private readonly bookRepository: BookRepository) {}
+export class BookService {
+  constructor(private readonly bookRepository: BooksPostgresRepository) {}
 
   async list(): Promise<Book[]> {
     return this.bookRepository.list()

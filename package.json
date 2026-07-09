@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "start:dev": "tsc && tsx --watch src/main.ts",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "db:seed": "tsx src/config/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "@types/pg": "^8.20.0",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
+    "csv-parse": "^7.0.1",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",

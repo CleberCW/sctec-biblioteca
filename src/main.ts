@@ -3,6 +3,7 @@ import 'dotenv/config'
 import { initDatabase } from './config/db'
 import { BooksPostgresRepository } from './repositories/books.repository'
 import { BookService } from './services/book.service'
+import { BooksAddView } from './views/add.books.view'
 import { BooksView } from './views/books.view'
 import { BooksListView } from './views/explorer.books.view'
 import { MenuView } from './views/menu.view'
@@ -18,7 +19,8 @@ initDatabase().catch((err: unknown) => {
 function bootstrap() {
   const bookService = new BookService(new BooksPostgresRepository())
   const booksListView = new BooksListView(bookService)
-  const booksView = new BooksView(booksListView)
+  const booksAddView = new BooksAddView(bookService)
+  const booksView = new BooksView(booksListView, booksAddView)
 
   const menuView = new MenuView(booksView)
 

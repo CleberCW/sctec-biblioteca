@@ -4,9 +4,9 @@ import { BookService } from '../services/book.service'
 import { BookListPage } from '../types/BookListPage'
 
 export class BooksListView extends ConsoleView {
-  private currentOffset = 0
-
   private pageSize = 10
+
+  private page = 1
 
   private bookListPage?: BookListPage
 
@@ -21,15 +21,11 @@ export class BooksListView extends ConsoleView {
   private async renderPage(): Promise<void> {
     this.display('\n=== Listar Livros ===')
 
-    this.bookListPage = await this.bookService.getPage(
-      this.pageSize,
-      this.currentOffset
-    )
+    this.bookListPage = await this.bookService.getPage(this.page, this.pageSize)
 
     if (this.bookListPage.books.length === 0) {
       this.display('Nenhum livro encontrado.')
     } else {
-      this.display('Foram encontrados os livros:')
       this.bookListPage.books.forEach((b) => {
         this.display(this.formatBooks(b))
       })
@@ -40,12 +36,12 @@ export class BooksListView extends ConsoleView {
     const hasPrev = this.bookListPage.page > 1
     const hasNext = this.bookListPage.page < this.bookListPage.totalPages
 
-    const footer = [hasPrev ? '[P] Anterior' : '', hasNext ? '[N] Próxima' : '']
+    const footer = [hasPrev ? '[A] Anterior' : '', hasNext ? '[S] Próxima' : '']
       .filter((s) => s !== '')
       .join(' | ')
 
     this.display(footer !== '' ? footer : 'Página única')
-    this.display('[1] Selecionar  [2] Voltar')
+    this.display('[C] Selecionar  [Q] Voltar')
   }
 
   private async handleNext(): Promise<void> {
@@ -59,12 +55,9 @@ export class BooksListView extends ConsoleView {
       return
     }
 
-    this.currentOffset += this.pageSize
+    this.page++
 
-    this.bookListPage = await this.bookService.getPage(
-      this.pageSize,
-      this.currentOffset
-    )
+    this.bookListPage = await this.bookService.getPage(this.page, this.pageSize)
 
     await this.renderPage()
   }
@@ -80,18 +73,15 @@ export class BooksListView extends ConsoleView {
       return
     }
 
-    this.currentOffset -= this.pageSize
+    this.page--
 
-    this.bookListPage = await this.bookService.getPage(
-      this.pageSize,
-      this.currentOffset
-    )
+    this.bookListPage = await this.bookService.getPage(this.page, this.pageSize)
 
     await this.renderPage()
   }
 
   protected async onExit(): Promise<void> {
-    this.currentOffset = 0
+    this.page = 1
     return super.onExit()
   }
 
@@ -101,15 +91,15 @@ export class BooksListView extends ConsoleView {
     const option = await this.prompt('Escolha uma opção: ')
 
     switch (option.trim().toUpperCase()) {
-      case 'N':
+      case 'S':
         await this.handleNext()
         break
-      case 'P':
+      case 'A':
         await this.handlePrevious()
         break
-      case '1':
+      case 'C':
         break
-      case '2':
+      case 'Q':
         this.exit()
         break
       default:

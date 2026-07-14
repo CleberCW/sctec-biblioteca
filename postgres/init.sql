@@ -23,7 +23,7 @@ CREATE TABLE books (
     name VARCHAR NOT NULL,
     author_id INTEGER NOT NULL REFERENCES authors(id),
     description TEXT,
-    first_publish_year INTEGER,
+    publish_year INTEGER,
     editions INTEGER,
     num_pages INTEGER,
     "status" "BookStatus" NOT NULL DEFAULT 'available'

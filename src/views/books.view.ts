@@ -1,8 +1,12 @@
+import { BooksAddView } from './add.books.view'
 import { ConsoleView } from './console.view'
 import { BooksListView } from './explorer.books.view'
 
 export class BooksView extends ConsoleView {
-  constructor(private readonly booksListView: BooksListView) {
+  constructor(
+    private readonly booksListView: BooksListView,
+    private readonly booksAddView: BooksAddView
+  ) {
     super()
   }
 
@@ -24,6 +28,7 @@ export class BooksView extends ConsoleView {
         await this.booksListView.start()
         break
       case '3':
+        await this.booksAddView.start()
         break
       case '4':
         break

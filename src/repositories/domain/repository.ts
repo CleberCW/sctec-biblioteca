@@ -8,7 +8,7 @@ export interface BookRepository {
 }
 
 export interface AuthorRepository {
-  findAll(): Promise<Author[]>
+  list(): Promise<Author[]>
   addAuthor(author: Author): Promise<void>
   removeAuthor(id: number): Promise<void>
 }

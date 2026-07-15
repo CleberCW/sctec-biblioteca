@@ -61,24 +61,17 @@ export class AuthorPostgresRepository implements AuthorRepository {
     }
   }
 
-  async addAuthor(author: CreateAuthorDTO): Promise<void> {
-    try {
-      await pool.query(
-        `
-      INSERT INTO authors (
-        name
-      )
-      VALUES (
-        $1
-      );
-      `,
-        [author.name]
-      )
-    } catch (err: unknown) {
-      throw BaseException.fromUnknown(err, {
-        messagePrefix: 'INSERT AUTHOR: '
-      })
-    }
+  async addAuthor(author: CreateAuthorDTO): Promise<number> {
+    const result = await pool.query<{ id: number }>(
+      `
+    INSERT INTO authors (name)
+    VALUES ($1)
+    RETURNING id;
+    `,
+      [author.name]
+    )
+
+    return result.rows[0].id
   }
 
   async removeAuthor(id: number): Promise<void> {

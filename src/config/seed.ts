@@ -13,7 +13,7 @@ interface BookRow {
   description: string
   genres: string
   first_publish_year: string
-  editions: string
+  edition: string
   num_pages: string
 }
 
@@ -114,16 +114,16 @@ async function main() {
       const insertedBook = await client.query<{ id: number }>(
         `
         INSERT INTO books (
-            openlibrary_id,
+            barcode,
             name,
             author_id,
             description,
-            first_publish_year,
-            editions,
+            publish_year,
+            edition,
             num_pages
         )
         VALUES ($1,$2,$3,$4,$5,$6,$7)
-        ON CONFLICT (openlibrary_id) DO NOTHING
+        ON CONFLICT (barcode) DO NOTHING
         RETURNING id
         `,
         [
@@ -132,7 +132,7 @@ async function main() {
           authorId,
           row.description || null,
           Number(row.first_publish_year) || null,
-          Number(row.editions) || null,
+          Number(row.edition) || null,
           Number(row.num_pages) || null
         ]
       )

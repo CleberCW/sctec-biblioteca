@@ -90,18 +90,14 @@ export abstract class ConsoleView {
   }
 
   protected async onUpdateError(error: unknown): Promise<void> {
-    // Most-specific first: FatalViewException IS a BaseException, so it must be
-    // matched before the recoverable branch or it would never be reached.
     if (error instanceof FatalViewException) {
-      // Fatal to this view: surface the curated message, pause so the user can
-      // read it, then tear the view down (back to the parent view).
       this.exit(error)
       await this.prompt('Pressione ENTER para continuar:')
       return
     }
 
     if (error instanceof BaseException) {
-      LoggerUtil.error(error)
+      this.reportTechnicalError(error)
       await this.prompt('Pressione ENTER para continuar:')
       return
     }

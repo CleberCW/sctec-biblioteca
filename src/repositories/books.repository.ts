@@ -1,7 +1,7 @@
 import { pool } from '../config/db'
 import { BaseException } from '../errors/base.exception'
 import { BookRepository } from './domain/repository'
-import { CreateBookDTO } from '../dtos/CreateBookDTO'
+import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
 import { Book } from '../models/Book'
 
 export class BooksPostgresRepository implements BookRepository {
@@ -42,18 +42,18 @@ export class BooksPostgresRepository implements BookRepository {
     }
   }
 
-  async addBook(book: CreateBookDTO): Promise<void> {
+  async addBook(book: CreateBookRepositoryDTO): Promise<void> {
     try {
       await pool.query(
         `
       INSERT INTO books (
-        openlibrary_id,
+        barcode,
         name,
         author_id,
         description,
-        firstPublishYear,
-        editions,
-        numPages
+        publish_years,
+        edition,
+        num_pages
       )
       VALUES (
         $1, $2, $3, $4, $5,
@@ -61,12 +61,12 @@ export class BooksPostgresRepository implements BookRepository {
       );
       `,
         [
-          book.openLibraryId,
+          book.barcode,
           book.name,
           book.authorId,
           book.description,
-          book.firstPublishYear,
-          book.editions,
+          book.publishYear,
+          book.edition,
           book.numPages
         ]
       )
@@ -89,6 +89,27 @@ export class BooksPostgresRepository implements BookRepository {
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'DELETE BOOK: '
+      })
+    }
+  }
+
+  async barcodeExists(barcode: string): Promise<boolean> {
+    try {
+      const result = await pool.query<{ exists: boolean }>(
+        `
+      SELECT EXISTS (
+        SELECT 1
+        FROM books
+        WHERE barcode = $1
+      ) AS exists;
+      `,
+        [barcode]
+      )
+
+      return result.rows[0].exists
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'CHECK BARCODE: '
       })
     }
   }

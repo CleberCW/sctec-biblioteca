@@ -1,26 +1,50 @@
+import { randomInt } from 'node:crypto'
+
+import { AuthorService } from './author.service'
 import { Result } from '../@common/result/result'
+import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
+import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
 import { Book } from '../models/Book'
 import { BooksPostgresRepository } from '../repositories/books.repository'
 
 export class BookService {
-  constructor(private readonly bookRepository: BooksPostgresRepository) {}
+  constructor(
+    private readonly bookRepository: BooksPostgresRepository,
+    private readonly authorService: AuthorService
+  ) {}
 
   async list(): Promise<Book[]> {
     return this.bookRepository.list()
   }
 
-  async add(book: Book): Promise<Result<void, 'duplicate'>> {
-    const books = await this.bookRepository.list()
+  private generateBarcode(length = 12): string {
+    let barcode = ''
 
-    const isDuplicate = books.some(
-      (p) => p.openLibraryId === book.openLibraryId
-    )
-
-    if (isDuplicate) {
-      return Result.fail('duplicate')
+    for (let i = 0; i < length; i++) {
+      barcode += String(randomInt(10))
     }
 
-    await this.bookRepository.addBook(book)
+    return barcode
+  }
+
+  async add(book: CreateBookInputDTO): Promise<Result<void>> {
+    const authorId = await this.authorService.findOrCreate({
+      name: book.author
+    })
+
+    let barcode: string
+
+    do {
+      barcode = this.generateBarcode()
+    } while (await this.bookRepository.barcodeExists(barcode))
+
+    const bookToAdd: CreateBookRepositoryDTO = {
+      ...book,
+      authorId,
+      barcode
+    }
+
+    await this.bookRepository.addBook(bookToAdd)
 
     return Result.void()
   }

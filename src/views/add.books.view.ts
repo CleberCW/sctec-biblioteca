@@ -1,37 +1,25 @@
 import { ConsoleView } from './console.view'
+import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
 import { BookService } from '../services/book.service'
 import { BookValidator } from '../validators/BookValidator'
 
 export class BooksAddView extends ConsoleView {
+  static readonly QUIT_SYMBOL = 'Q'
+
   constructor(private readonly bookService: BookService) {
     super()
-  }
-
-  private checkYear(year: number): boolean {
-    if (isNaN(year)) {
-      return false
-    }
-
-    if (year < 0 || year > new Date().getFullYear()) {
-      return false
-    }
-
-    if (!Number.isInteger(year)) {
-      return false
-    }
-
-    return true
   }
 
   private async renderPage(): Promise<void> {
     this.display('\n=== Cadastrar Livro ===\n')
 
-    const book = {
+    const book: CreateBookInputDTO = {
       name: '',
       author: '',
       description: '',
-      publishYear: null as number | null,
-      edition: null as number | null
+      publishYear: undefined,
+      edition: undefined,
+      numPages: undefined
     }
 
     while (!BookValidator.validateName(book.name)) {
@@ -50,66 +38,86 @@ export class BooksAddView extends ConsoleView {
       }
     }
 
-    book.description = (await this.prompt('Descrição: ')).trim()
+    book.description =
+      (await this.prompt('Descrição: ')).trim() === ''
+        ? undefined
+        : book.description
 
     do {
-      book.publishYear = Number(
-        (await this.prompt('Ano de publicação: ')).trim()
-      )
+      book.publishYear =
+        (await this.prompt('Ano de publicação: ')).trim() === ''
+          ? undefined
+          : Number(book.publishYear)
 
       if (!BookValidator.validatePublishYear(book.publishYear)) {
         this.display('Ano inválido.\n')
       }
-    } while (!BookValidator.validatePublishYear(book.publishYear))
+    } while (
+      this.isInView &&
+      !BookValidator.validatePublishYear(book.publishYear)
+    )
 
     do {
-      const editionInput = (await this.prompt('Edição (opcional): ')).trim()
-
-      if (editionInput === '') {
-        book.edition = null
-        break
-      }
-
-      book.edition = Number(editionInput)
+      book.edition =
+        (await this.prompt('Edição (opcional): ')).trim() === ''
+          ? undefined
+          : Number(book.edition)
 
       if (!BookValidator.validateEdition(book.edition)) {
         this.display('Edição inválida.\n')
       }
-    } while (!BookValidator.validateEdition(book.edition))
+    } while (this.isInView && !BookValidator.validateEdition(book.edition))
+
+    do {
+      book.numPages =
+        (await this.prompt('Número de páginas (opcional): ')).trim() === ''
+          ? undefined
+          : Number(book.numPages)
+
+      if (!BookValidator.validateNumPages(book.numPages)) {
+        this.display('Número de páginas inválido.\n')
+      }
+    } while (this.isInView && !BookValidator.validateNumPages(book.numPages))
 
     this.display(`
         =============================================================
 
         Nome: ${book.name},
         Autor: ${book.author},
-        Descrição: ${book.description},
+        Descrição: ${book.description ?? 'N/A'},
         Ano de publicação: ${book.publishYear ? String(book.publishYear) : 'N/A'}, 
         Edição: ${book.edition ? `${String(book.edition)}ª` : 'N/A'},
+        Número de páginas: ${book.numPages ? String(book.numPages) : 'N/A'},
 
         =============================================================
         
         `)
 
     this.display(`[C] Confirmar | [D] Cancelar`)
-  }
-
-  protected async update(): Promise<void> {
-    await this.renderPage()
 
     const option = await this.prompt('Escolha uma opção: ')
 
     switch (option.trim().toUpperCase()) {
       case 'C':
-        this.display('Livro adicionado!')
+        await this.bookService.add(book)
+        this.display('Livro cadastrado com sucesso!')
         await this.prompt('Pressione ENTER para continuar:')
+        this.exit()
         break
       case 'D':
         this.display('Operação cancelada')
         await this.prompt('Pressione ENTER para continuar:')
+        this.exit()
         break
       default:
         this.display('Opção inválida.')
         await this.prompt('Pressione ENTER para continuar:')
     }
+
+    this.exit()
+  }
+
+  protected async update(): Promise<void> {
+    await this.renderPage()
   }
 }

@@ -51,7 +51,7 @@ export class BooksPostgresRepository implements BookRepository {
         name,
         author_id,
         description,
-        publish_years,
+        publish_year,
         edition,
         num_pages
       )

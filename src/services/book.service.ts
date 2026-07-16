@@ -1,6 +1,8 @@
 import { randomInt } from 'node:crypto'
 
 import { AuthorService } from './author.service'
+import { BrasilApiIsbnProvider } from './isbn.service'
+import { NativeHttpService } from '../@common/http/impl/native-http.service'
 import { Result } from '../@common/result/result'
 import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
 import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
@@ -74,5 +76,10 @@ export class BookService {
       totalPages: Math.ceil(total / pageSize),
       page
     }
+  }
+
+  async findMetadata(isbn: string) {
+    const isbnProvider = new BrasilApiIsbnProvider(new NativeHttpService())
+    return isbnProvider.findByIsbn(isbn)
   }
 }

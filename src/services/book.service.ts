@@ -82,4 +82,20 @@ export class BookService {
     const isbnProvider = new BrasilApiIsbnProvider(new NativeHttpService())
     return isbnProvider.findByIsbn(isbn)
   }
+
+  async searchByBarcode(barcode: string): Promise<Book | null> {
+    return this.bookRepository.searchByBarcode(barcode)
+  }
+
+  async searchByTitle(title: string): Promise<Book[]> {
+    return this.bookRepository.searchByTitle(title)
+  }
+
+  async searchByAuthor(author: string): Promise<Book[]> {
+    return this.bookRepository.searchByAuthor(author)
+  }
+
+  async searchByKeyword(keyword: string): Promise<Book[]> {
+    return this.bookRepository.searchByKeyword(keyword)
+  }
 }

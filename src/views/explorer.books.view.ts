@@ -4,7 +4,7 @@ import { BookService } from '../services/book.service'
 import { BookListPage } from '../types/BookListPage'
 
 export class BooksListView extends ConsoleView {
-  private pageSize = 10
+  private pageSize = 20
 
   private page = 1
 
@@ -15,7 +15,7 @@ export class BooksListView extends ConsoleView {
   }
 
   private formatBooks(b: Book): string {
-    return `#${String(b.id)} - ${b.name} | Barcode: ${b.barcode} | Autor: ${String(b.authorId)} | Descrição: ${(b.description ?? 'Sem descrição').slice(0, 50)}.`
+    return `#${String(b.id)} - ${b.name} | Barcode: ${b.barcode} | Autor: ${String(b.authorId)} | Descrição: ${(b.description ?? 'Sem descrição').slice(0, 50)}...`
   }
 
   private async renderPage(): Promise<void> {

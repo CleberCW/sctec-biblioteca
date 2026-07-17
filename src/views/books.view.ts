@@ -1,11 +1,13 @@
 import { BooksAddView } from './add.books.view'
 import { ConsoleView } from './console.view'
 import { BooksListView } from './explorer.books.view'
+import { BooksSearchView } from './search.books.view'
 
 export class BooksView extends ConsoleView {
   constructor(
     private readonly booksListView: BooksListView,
-    private readonly booksAddView: BooksAddView
+    private readonly booksAddView: BooksAddView,
+    private readonly booksSearchView: BooksSearchView
   ) {
     super()
   }
@@ -23,6 +25,7 @@ export class BooksView extends ConsoleView {
 
     switch (option.trim().toUpperCase()) {
       case '1':
+        await this.booksSearchView.start()
         break
       case '2':
         await this.booksListView.start()

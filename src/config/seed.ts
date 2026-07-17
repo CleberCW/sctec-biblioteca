@@ -128,7 +128,7 @@ async function main() {
         `,
         [
           row.book_id,
-          row.title,
+          row.title.replace(/\s*\n+\s*/g, ' - ').trim(),
           authorId,
           row.description || null,
           Number(row.first_publish_year) || null,

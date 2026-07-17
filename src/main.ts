@@ -9,6 +9,7 @@ import { BooksAddView } from './views/add.books.view'
 import { BooksView } from './views/books.view'
 import { BooksListView } from './views/explorer.books.view'
 import { MenuView } from './views/menu.view'
+import { BooksSearchView } from './views/search.books.view'
 
 initDatabase().catch((err: unknown) => {
   if (err instanceof Error) {
@@ -26,7 +27,8 @@ function bootstrap() {
   )
   const booksListView = new BooksListView(bookService)
   const booksAddView = new BooksAddView(bookService)
-  const booksView = new BooksView(booksListView, booksAddView)
+  const booksSearchView = new BooksSearchView(bookService)
+  const booksView = new BooksView(booksListView, booksAddView, booksSearchView)
 
   const menuView = new MenuView(booksView)
 

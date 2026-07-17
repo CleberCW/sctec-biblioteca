@@ -1,7 +1,7 @@
-import { BooksAddView } from './add.books.view'
+import { BooksAddView } from './books.add.view'
+import { BooksListView } from './books.explorer.view'
+import { BooksSearchView } from './books.search.view'
 import { ConsoleView } from './console.view'
-import { BooksListView } from './explorer.books.view'
-import { BooksSearchView } from './search.books.view'
 
 export class BooksView extends ConsoleView {
   constructor(
@@ -17,8 +17,7 @@ export class BooksView extends ConsoleView {
     this.display('1. Pesquisar Livro')
     this.display('2. Listar Livros')
     this.display('3. Cadastrar Livro')
-    this.display('4. Remover Livro')
-    this.display('5. Sair')
+    this.display('4. Sair')
     this.display('\n==============\n')
 
     const option = await this.prompt('Escolha uma opção: ')
@@ -34,8 +33,6 @@ export class BooksView extends ConsoleView {
         await this.booksAddView.start()
         break
       case '4':
-        break
-      case '5':
         this.exit()
         break
       default:

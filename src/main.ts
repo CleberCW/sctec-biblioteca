@@ -5,11 +5,12 @@ import { AuthorPostgresRepository } from './repositories/author.repository'
 import { BooksPostgresRepository } from './repositories/books.repository'
 import { AuthorService } from './services/author.service'
 import { BookService } from './services/book.service'
-import { BooksAddView } from './views/add.books.view'
+import { BooksAddView } from './views/books.add.view'
+import { BooksListView } from './views/books.explorer.view'
+import { BooksSearchView } from './views/books.search.view'
 import { BooksView } from './views/books.view'
-import { BooksListView } from './views/explorer.books.view'
 import { MenuView } from './views/menu.view'
-import { BooksSearchView } from './views/search.books.view'
+import { UsersView } from './views/users.view'
 
 initDatabase().catch((err: unknown) => {
   if (err instanceof Error) {
@@ -30,7 +31,9 @@ function bootstrap() {
   const booksSearchView = new BooksSearchView(bookService)
   const booksView = new BooksView(booksListView, booksAddView, booksSearchView)
 
-  const menuView = new MenuView(booksView)
+  const usersView = new UsersView() // TODO: Implement UsersView
+
+  const menuView = new MenuView(booksView, usersView)
 
   return menuView.start()
 }

@@ -1,16 +1,20 @@
 import { BooksView } from './books.view'
 import { ConsoleView } from './console.view'
+import { UsersView } from './users.view'
 
 export class MenuView extends ConsoleView {
   static readonly QUIT_SYMBOL = 'Q'
 
-  constructor(private readonly booksView: BooksView) {
+  constructor(
+    private readonly booksView: BooksView,
+    private readonly usersView: UsersView
+  ) {
     super(true)
   }
 
   private readonly MENU_OPTIONS = {
     '1': 'Livros',
-    '2': '...',
+    '2': 'Usuários',
     [MenuView.QUIT_SYMBOL]: '🚪 Sair do Sistema'
   } as const
 
@@ -38,6 +42,7 @@ export class MenuView extends ConsoleView {
         await this.booksView.start()
         break
       case '2':
+        await this.usersView.start()
         break
     }
   }

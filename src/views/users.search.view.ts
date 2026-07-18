@@ -29,7 +29,7 @@ export class UserSearchView extends ConsoleView {
       case '1': {
         const cpf = await this.prompt('Digite o CPF: ')
         const result = await this.userService.searchByCpf(cpf)
-        await this.renderResults(result)
+        await this.renderResults(result ? [result] : [])
         await this.prompt('Pressione ENTER para continuar:')
         break
       }

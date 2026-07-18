@@ -1,3 +1,5 @@
+import { PoolClient } from 'pg'
+
 import { pool } from '../config/db'
 import { CreateUserDTO } from '../dtos/CreateUserDTO'
 import { BaseException } from '../errors/base.exception'
@@ -61,9 +63,11 @@ export class UserPostgresRepository implements UserRepository {
     }
   }
 
-  async searchByCpf(cpf: string): Promise<User[]> {
+  async searchByCpf(cpf: string, client?: PoolClient): Promise<User | null> {
     try {
-      const result = await pool.query<User>(
+      const db = client ?? pool
+
+      const result = await db.query<User>(
         `
       SELECT *
       FROM users
@@ -72,7 +76,7 @@ export class UserPostgresRepository implements UserRepository {
         [cpf]
       )
 
-      return result.rows
+      return result.rows[0] ?? null
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'SEARCH USER BY CPF: '

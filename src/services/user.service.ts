@@ -1,3 +1,5 @@
+import { PoolClient } from 'pg'
+
 import { Result } from '../@common/result/result'
 import { CreateUserDTO } from '../dtos/CreateUserDTO'
 import { User } from '../models/User'
@@ -38,8 +40,8 @@ export class UserService {
     }
   }
 
-  async searchByCpf(cpf: string): Promise<User[]> {
-    return this.userRepository.searchByCpf(cpf)
+  async searchByCpf(cpf: string, client?: PoolClient): Promise<User | null> {
+    return this.userRepository.searchByCpf(cpf, client)
   }
 
   async searchByName(name: string): Promise<User[]> {

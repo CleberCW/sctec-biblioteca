@@ -1,8 +1,12 @@
+import { PoolClient } from 'pg'
+
 import { CreateAuthorDTO } from '../../dtos/CreateAuthorDTO'
 import { CreateBookRepositoryDTO } from '../../dtos/CreateBookRepository'
+import { CreateLoanRepositoryDTO } from '../../dtos/CreateLoanRepositoryDTO'
 import { CreateUserDTO } from '../../dtos/CreateUserDTO'
 import { Author } from '../../models/Author'
 import { Book } from '../../models/Book'
+import { BookLoan } from '../../models/BookLoan'
 import { User } from '../../models/User'
 
 export interface BookRepository {
@@ -21,4 +25,11 @@ export interface UserRepository {
   list(): Promise<User[]>
   addUser(user: CreateUserDTO): Promise<number>
   removeUser(id: number): Promise<number | null>
+}
+
+export interface LoanRepository {
+  list(pageSize: number, offset: number): Promise<BookLoan[]>
+  count(): Promise<number>
+  addLoan(loan: CreateLoanRepositoryDTO, client: PoolClient): Promise<number>
+  finishLoan(id: number, date: Date): Promise<number>
 }

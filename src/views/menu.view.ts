@@ -1,5 +1,6 @@
 import { BooksView } from './books.view'
 import { ConsoleView } from './console.view'
+import { LoansView } from './loans.view'
 import { UsersView } from './users.view'
 
 export class MenuView extends ConsoleView {
@@ -7,7 +8,8 @@ export class MenuView extends ConsoleView {
 
   constructor(
     private readonly booksView: BooksView,
-    private readonly usersView: UsersView
+    private readonly usersView: UsersView,
+    private readonly loansView: LoansView
   ) {
     super(true)
   }
@@ -15,6 +17,8 @@ export class MenuView extends ConsoleView {
   private readonly MENU_OPTIONS = {
     '1': 'Livros',
     '2': 'Usuários',
+    '3': 'Empréstimos',
+    '4': 'Relatórios',
     [MenuView.QUIT_SYMBOL]: '🚪 Sair do Sistema'
   } as const
 
@@ -44,6 +48,18 @@ export class MenuView extends ConsoleView {
       case '2':
         await this.usersView.start()
         break
+      case '3':
+        await this.loansView.start()
+        break
+      case '4':
+        // Handle relatórios option
+        break
+      case MenuView.QUIT_SYMBOL:
+        this.exit()
+        break
+      default:
+        this.display('Opção inválida.')
+        await this.prompt('Pressione ENTER para continuar:')
     }
   }
 

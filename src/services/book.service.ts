@@ -1,5 +1,7 @@
 import { randomInt } from 'node:crypto'
 
+import { PoolClient } from 'pg'
+
 import { AuthorService } from './author.service'
 import { BrasilApiIsbnProvider } from './isbn.service'
 import { NativeHttpService } from '../@common/http/impl/native-http.service'
@@ -83,8 +85,11 @@ export class BookService {
     return isbnProvider.findByIsbn(isbn)
   }
 
-  async searchByBarcode(barcode: string): Promise<Book | null> {
-    return this.bookRepository.searchByBarcode(barcode)
+  async searchByBarcode(
+    barcode: string,
+    client?: PoolClient
+  ): Promise<Book | null> {
+    return this.bookRepository.searchByBarcode(barcode, client)
   }
 
   async searchByTitle(title: string): Promise<Book[]> {

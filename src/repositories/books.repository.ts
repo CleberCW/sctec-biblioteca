@@ -1,3 +1,5 @@
+import { PoolClient } from 'pg'
+
 import { pool } from '../config/db'
 import { BaseException } from '../errors/base.exception'
 import { BookRepository } from './domain/repository'
@@ -118,9 +120,13 @@ export class BooksPostgresRepository implements BookRepository {
     }
   }
 
-  async searchByBarcode(barcode: string): Promise<Book | null> {
+  async searchByBarcode(
+    barcode: string,
+    client?: PoolClient
+  ): Promise<Book | null> {
     try {
-      const result = await pool.query<Book>(
+      const db = client ?? pool
+      const result = await db.query<Book>(
         `
       SELECT *
       FROM books

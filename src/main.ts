@@ -13,6 +13,9 @@ import { BooksListView } from './views/books.explorer.view'
 import { BooksSearchView } from './views/books.search.view'
 import { BooksView } from './views/books.view'
 import { MenuView } from './views/menu.view'
+import { UserAddView } from './views/users.add.view'
+import { UsersListView } from './views/users.explorer.view'
+import { UserSearchView } from './views/users.search.view'
 import { UsersView } from './views/users.view'
 
 initDatabase().catch((err: unknown) => {
@@ -36,7 +39,10 @@ function bootstrap() {
   const booksSearchView = new BooksSearchView(bookService, viewFactory)
   const booksView = new BooksView(booksListView, booksAddView, booksSearchView)
 
-  const usersView = new UsersView() // TODO: Implement UsersView
+  const usersListView = new UsersListView()
+  const usersSearchView = new UserSearchView(userService, viewFactory)
+  const usersAddView = new UserAddView(userService)
+  const usersView = new UsersView(usersListView, usersSearchView, usersAddView)
 
   const menuView = new MenuView(booksView, usersView)
 

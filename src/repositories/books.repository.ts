@@ -141,9 +141,13 @@ export class BooksPostgresRepository implements BookRepository {
     try {
       const result = await pool.query<BookSearchResult>(
         `
-      SELECT *, similarity(name, $1) AS score 
-      FROM books 
-      WHERE similarity(name, $1) > 0.5 
+      SELECT
+        b.*,
+        a.name AS author,
+        similarity(b.name, $1) AS score
+      FROM books b
+      JOIN authors a ON a.id = b.author_id
+      WHERE similarity(b.name, $1) > 0.5
       ORDER BY score DESC;
       `,
         [title]

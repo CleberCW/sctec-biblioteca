@@ -1,5 +1,5 @@
 import { Result } from '../@common/result/result'
-import { CreateUserRepositoryDTO } from '../dtos/CreateUserRepository'
+import { CreateUserDTO } from '../dtos/CreateUserDTO'
 import { User } from '../models/User'
 import { UserPostgresRepository } from '../repositories/user.repository'
 
@@ -10,7 +10,7 @@ export class UserService {
     return this.userRepository.list()
   }
 
-  async add(user: CreateUserRepositoryDTO): Promise<Result<number>> {
+  async add(user: CreateUserDTO): Promise<Result<number>> {
     const userId = await this.userRepository.addUser(user)
     return Result.ok(userId)
   }
@@ -36,5 +36,21 @@ export class UserService {
       totalPages: Math.ceil(total / pageSize),
       page
     }
+  }
+
+  async searchByCpf(cpf: string): Promise<User[]> {
+    return this.userRepository.searchByCpf(cpf)
+  }
+
+  async searchByName(name: string): Promise<User[]> {
+    return this.userRepository.searchByName(name)
+  }
+
+  async searchByEmail(email: string): Promise<User[]> {
+    return this.userRepository.searchByEmail(email)
+  }
+
+  async searchByPhone(phone: string): Promise<User[]> {
+    return this.userRepository.searchByPhone(phone)
   }
 }

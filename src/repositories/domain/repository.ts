@@ -1,6 +1,6 @@
 import { CreateAuthorDTO } from '../../dtos/CreateAuthorDTO'
 import { CreateBookRepositoryDTO } from '../../dtos/CreateBookRepository'
-import { CreateUserRepositoryDTO } from '../../dtos/CreateUserRepository'
+import { CreateUserDTO } from '../../dtos/CreateUserDTO'
 import { Author } from '../../models/Author'
 import { Book } from '../../models/Book'
 import { User } from '../../models/User'
@@ -19,6 +19,6 @@ export interface AuthorRepository {
 
 export interface UserRepository {
   list(): Promise<User[]>
-  addUser(user: CreateUserRepositoryDTO): Promise<number>
+  addUser(user: CreateUserDTO): Promise<number>
   removeUser(id: number): Promise<number | null>
 }

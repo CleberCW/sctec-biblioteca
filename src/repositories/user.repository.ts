@@ -1,5 +1,5 @@
 import { pool } from '../config/db'
-import { CreateUserRepositoryDTO } from '../dtos/CreateUserRepository'
+import { CreateUserDTO } from '../dtos/CreateUserDTO'
 import { BaseException } from '../errors/base.exception'
 import { User } from '../models/User'
 import { UserRepository } from './domain/repository'
@@ -42,7 +42,7 @@ export class UserPostgresRepository implements UserRepository {
     }
   }
 
-  async findByName(name: string): Promise<User | null> {
+  async searchByName(name: string): Promise<User[]> {
     try {
       const result = await pool.query<User>(
         `
@@ -53,22 +53,79 @@ export class UserPostgresRepository implements UserRepository {
         [name]
       )
 
-      return result.rows[0] ?? null
+      return result.rows
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
-        messagePrefix: 'FIND USER BY NAME: '
+        messagePrefix: 'SEARCH USER BY NAME: '
       })
     }
   }
 
-  async addUser(user: CreateUserRepositoryDTO): Promise<number> {
+  async searchByCpf(cpf: string): Promise<User[]> {
+    try {
+      const result = await pool.query<User>(
+        `
+      SELECT *
+      FROM users
+      WHERE cpf = $1;
+      `,
+        [cpf]
+      )
+
+      return result.rows
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'SEARCH USER BY CPF: '
+      })
+    }
+  }
+
+  async searchByEmail(email: string): Promise<User[]> {
+    try {
+      const result = await pool.query<User>(
+        `
+      SELECT *
+      FROM users
+      WHERE email = $1;
+      `,
+        [email]
+      )
+
+      return result.rows
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'SEARCH USER BY EMAIL: '
+      })
+    }
+  }
+
+  async searchByPhone(phone: string): Promise<User[]> {
+    try {
+      const result = await pool.query<User>(
+        `
+      SELECT *
+      FROM users
+      WHERE phone = $1;
+      `,
+        [phone]
+      )
+
+      return result.rows
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'SEARCH USER BY PHONE: '
+      })
+    }
+  }
+
+  async addUser(user: CreateUserDTO): Promise<number> {
     const result = await pool.query<{ id: number }>(
       `
-    INSERT INTO users (name)
-    VALUES ($1)
+    INSERT INTO users (name, cpf, email, phone)
+    VALUES ($1, $2, $3, $4)
     RETURNING id;
     `,
-      [user.name]
+      [user.name, user.cpf, user.email, user.phone]
     )
 
     return result.rows[0].id

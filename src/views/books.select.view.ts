@@ -1,12 +1,16 @@
 import { ConsoleView } from './console.view'
+import { ViewFactory } from '../factories/view.factory'
 import { Book } from '../models/Book'
 
 export class SelectBooksView extends ConsoleView {
-  constructor(private readonly book: Book) {
+  constructor(
+    private readonly book: Book,
+    private readonly viewFactory: ViewFactory
+  ) {
     super()
   }
 
-  protected async update(): Promise<void> {
+  protected async renderMenu(): Promise<void> {
     this.display('\n=== Livro ===')
     this.display(`Título: ${this.book.name}`)
     this.display(`Código: ${this.book.barcode}`)
@@ -22,15 +26,15 @@ export class SelectBooksView extends ConsoleView {
 
     switch (option) {
       case '1':
-        await this.loanBook()
+        this.loanBook()
         break
 
       case '2':
-        await this.editBook()
+        this.editBook()
         break
 
       case '3':
-        await this.removeBook()
+        this.removeBook()
         break
 
       case 'Q':
@@ -42,15 +46,19 @@ export class SelectBooksView extends ConsoleView {
     }
   }
 
-  private async loanBook(): Promise<void> {
-    // usa this.book.id
+  private loanBook() {
+    this.exit()
   }
 
-  private async editBook(): Promise<void> {
-    // usa this.book
+  private editBook() {
+    this.exit()
   }
 
-  private async removeBook(): Promise<void> {
-    // usa this.book.id
+  private removeBook() {
+    this.exit()
+  }
+
+  protected async update(): Promise<void> {
+    await this.renderMenu()
   }
 }

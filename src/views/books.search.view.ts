@@ -1,11 +1,15 @@
 import { ConsoleView } from './console.view'
+import { ViewFactory } from '../factories/view.factory'
 import { Book } from '../models/Book'
 import { BookService } from '../services/book.service'
 
 export class BooksSearchView extends ConsoleView {
   static readonly QUIT_SYMBOL = 'Q'
 
-  constructor(private readonly bookService: BookService) {
+  constructor(
+    private readonly bookService: BookService,
+    private readonly viewFactory: ViewFactory
+  ) {
     super()
   }
 
@@ -68,40 +72,44 @@ export class BooksSearchView extends ConsoleView {
   private async renderResults(results: Book[]): Promise<void> {
     this.display('\n=== Resultado da Pesquisa ===')
 
-    const hasResults = results.length > 0
-
-    if (!hasResults) {
+    if (results.length === 0) {
       this.display('Nenhum livro encontrado.')
-    } else {
-      results.forEach((b) => {
-        this.display(this.formatBooks(b))
-      })
+      await this.prompt('Pressione ENTER para continuar:')
+      return
     }
 
-    this.display('=========================')
+    results.forEach((book) => {
+      this.display(this.formatBooks(book))
+    })
 
-    if (hasResults) {
-      this.display('[C] Selecionar  [Q] Voltar')
-      await this.renderSpecificBookOptions()
-    }
-  }
+    for (;;) {
+      const input = (
+        await this.prompt('\nDigite o ID do livro ou Q para voltar: ')
+      )
+        .trim()
+        .toUpperCase()
 
-  protected async renderSpecificBookOptions(): Promise<void> {
-    const option = (await this.prompt('Escolha uma opção: '))
-      .trim()
-      .toUpperCase()
+      if (input === 'Q') {
+        return
+      }
 
-    switch (option) {
-      case 'C':
-        break
+      const id = Number(input)
 
-      case 'Q':
-        this.exit()
-        break
+      if (Number.isNaN(id)) {
+        this.display('ID inválido.')
+        continue
+      }
 
-      default:
-        this.display('Opção inválida.')
-        await this.prompt('Pressione ENTER para continuar:')
+      const book = results.find((b) => b.id === id)
+
+      if (!book) {
+        this.display('Livro não encontrado.')
+        continue
+      }
+
+      this.exit()
+      await this.viewFactory.createSelectBooksView(book).start()
+      return
     }
   }
 

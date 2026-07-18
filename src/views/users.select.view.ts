@@ -1,5 +1,5 @@
 import { ConsoleView } from './console.view'
-import { ViewFactory } from '../factories/view.factory'
+import { ViewFactory } from '../factories/view.factories'
 import { User } from '../models/User'
 
 export class SelectUserView extends ConsoleView {

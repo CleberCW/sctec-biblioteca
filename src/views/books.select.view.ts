@@ -10,10 +10,6 @@ export class SelectBooksView extends ConsoleView {
     super()
   }
 
-  async start(): Promise<void> {
-    await this.renderMenu()
-  }
-
   protected async renderMenu(): Promise<void> {
     this.display('\n=== Livro ===')
     this.display(`Título: ${this.book.name}`)

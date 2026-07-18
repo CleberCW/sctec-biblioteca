@@ -1,7 +1,7 @@
-import { Book } from '../models/Book'
+import { BookSearchResult } from '../models/BookSearchResult'
 
 export interface BookListPage {
-  books: Book[]
+  books: BookSearchResult[]
   page: number
   totalPages: number
 }

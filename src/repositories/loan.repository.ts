@@ -3,26 +3,31 @@ import { PoolClient } from 'pg'
 import { pool } from '../config/db'
 import { CreateLoanRepositoryDTO } from '../dtos/CreateLoanRepositoryDTO'
 import { BaseException } from '../errors/base.exception'
-import { BookLoan } from '../models/BookLoan'
 import { LoanRepository } from './domain/repository'
+import { BookLoanResult } from '../models/BookLoanSearchResult'
 
 export class LoanPostgresRepository implements LoanRepository {
-  async list(pageSize = 0, offset = 10): Promise<BookLoan[]> {
+  async list(pageSize?: number, offset = 0): Promise<BookLoanResult[]> {
     try {
-      const result = await pool.query<BookLoan>(
-        `
+      let query = `
       SELECT
         bl.*,
-        a.name AS author
-        b.name AS title
+        b.name AS title,
+        u.name AS "userName"
       FROM book_loans bl
       JOIN books b ON b.id = bl.book_id
-      JOIN authors a ON a.id = bl.author_id
-      ORDER BY score DESC;
-      LIMIT $1 OFFSET $2;
-      `,
-        [pageSize, offset]
-      )
+      JOIN users u ON u.id = bl.user_id
+      ORDER BY bl.id;
+    `
+
+      const params: number[] = []
+
+      if (pageSize !== undefined) {
+        query += ` LIMIT $1 OFFSET $2`
+        params.push(pageSize, offset)
+      }
+
+      const result = await pool.query<BookLoanResult>(query, params)
 
       return result.rows
     } catch (err: unknown) {

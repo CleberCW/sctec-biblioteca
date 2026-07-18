@@ -99,6 +99,8 @@ export class BooksSearchView extends ConsoleView {
       return
     }
 
+    console.dir(results, { depth: null })
+
     results.forEach((book) => {
       this.display(this.formatBooks(book))
     })

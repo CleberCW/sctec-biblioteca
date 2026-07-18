@@ -8,7 +8,6 @@ import { NativeHttpService } from '../@common/http/impl/native-http.service'
 import { Result } from '../@common/result/result'
 import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
 import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
-import { Book } from '../models/Book'
 import { BookSearchResult } from '../models/BookSearchResult'
 import { BooksPostgresRepository } from '../repositories/books.repository'
 
@@ -18,7 +17,7 @@ export class BookService {
     private readonly authorService: AuthorService
   ) {}
 
-  async list(): Promise<Book[]> {
+  async list(): Promise<BookSearchResult[]> {
     return this.bookRepository.list()
   }
 

@@ -1,8 +1,8 @@
 export interface BookLoan {
   id: number
-  userId: number
-  bookCopyId: number
-  loanDate: Date
-  dueDate: Date | null
-  returnedAt: Date | null
+  user_id: number
+  book_id: number
+  loan_date: Date
+  due_date: Date
+  returned_at: Date | null
 }

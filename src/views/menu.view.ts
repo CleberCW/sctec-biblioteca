@@ -1,6 +1,7 @@
 import { BooksView } from './books.view'
 import { ConsoleView } from './console.view'
 import { LoansView } from './loans.view'
+import { ReportsView } from './reports.view'
 import { UsersView } from './users.view'
 
 export class MenuView extends ConsoleView {
@@ -9,7 +10,8 @@ export class MenuView extends ConsoleView {
   constructor(
     private readonly booksView: BooksView,
     private readonly usersView: UsersView,
-    private readonly loansView: LoansView
+    private readonly loansView: LoansView,
+    private readonly reportsView: ReportsView
   ) {
     super(true)
   }
@@ -50,7 +52,7 @@ export class MenuView extends ConsoleView {
         await this.loansView.start()
         break
       case '4':
-        // Handle relatórios option
+        await this.reportsView.start()
         break
       case MenuView.QUIT_SYMBOL:
         this.exit()

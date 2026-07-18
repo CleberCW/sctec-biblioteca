@@ -1,8 +1,9 @@
 import { Result } from '../@common/result/result'
 import { pool } from '../config/db'
 import { CreateLoanInputDTO } from '../dtos/CreateLoanInputDTO'
+import { BookStatus } from '../enums/BookStatus'
 import { BaseException } from '../errors/base.exception'
-import { BookLoan } from '../models/BookLoan'
+import { BookLoanResult } from '../models/BookLoanSearchResult'
 import { BooksPostgresRepository } from '../repositories/books.repository'
 import { LoanPostgresRepository } from '../repositories/loan.repository'
 import { UserPostgresRepository } from '../repositories/user.repository'
@@ -14,7 +15,7 @@ export class LoanService {
     private readonly bookRepository: BooksPostgresRepository
   ) {}
 
-  async list(): Promise<BookLoan[]> {
+  async list(): Promise<BookLoanResult[]> {
     return this.loanRepository.list()
   }
 
@@ -39,6 +40,10 @@ export class LoanService {
         throw new Error('Livro não encontrado')
       }
 
+      if (book.status !== BookStatus.AVAILABLE) {
+        throw new Error('Livro não disponível')
+      }
+
       const loanId = await this.loanRepository.addLoan(
         {
           userId: user.id,
@@ -48,6 +53,8 @@ export class LoanService {
         },
         client
       )
+
+      await this.bookRepository.updateStatus(book.id, BookStatus.LOANED, client)
 
       await client.query('COMMIT')
 

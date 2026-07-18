@@ -4,16 +4,19 @@ import { pool } from '../config/db'
 import { BaseException } from '../errors/base.exception'
 import { BookRepository } from './domain/repository'
 import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
-import { Book } from '../models/Book'
+import { BookStatus } from '../enums/BookStatus'
 import { BookSearchResult } from '../models/BookSearchResult'
 
 export class BooksPostgresRepository implements BookRepository {
-  async list(pageSize = 0, offset = 10): Promise<Book[]> {
+  async list(pageSize = 0, offset = 10): Promise<BookSearchResult[]> {
     try {
-      const result = await pool.query<Book>(
+      const result = await pool.query<BookSearchResult>(
         `
-      SELECT *
-      FROM books
+      SELECT
+        b.*,
+        a.name AS author
+      FROM books b
+      JOIN authors a ON a.id = b.author_id
       ORDER BY id
       LIMIT $1 OFFSET $2;
       `,
@@ -124,11 +127,17 @@ export class BooksPostgresRepository implements BookRepository {
     try {
       const db = client ?? pool
       const result = await db.query<BookSearchResult>(
-        `
-      SELECT *
-      FROM books
-      WHERE barcode = $1;
-      `,
+        `SELECT
+        b.id,
+        b.name,
+        b.barcode,
+        a.name AS author,
+        b.description,
+        b.status
+        FROM books b
+        JOIN authors a
+            ON a.id = b.author_id
+        WHERE b.barcode = $1;`,
         [barcode]
       )
 
@@ -211,5 +220,20 @@ export class BooksPostgresRepository implements BookRepository {
         messagePrefix: 'SEARCH BOOK BY KEYWORD: '
       })
     }
+  }
+
+  async updateStatus(
+    id: number,
+    status: BookStatus,
+    client: PoolClient
+  ): Promise<void> {
+    await client.query(
+      `
+    UPDATE books
+    SET status = $2
+    WHERE id = $1
+    `,
+      [id, status]
+    )
   }
 }

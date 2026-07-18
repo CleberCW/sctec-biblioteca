@@ -1,5 +1,6 @@
 import { ConsoleView } from './console.view'
 import { CreateLoanInputDTO } from '../dtos/CreateLoanInputDTO'
+import { BookStatus } from '../enums/BookStatus'
 import { BaseException } from '../errors/base.exception'
 import { BookService } from '../services/book.service'
 import { LoanService } from '../services/loan.service'
@@ -7,6 +8,8 @@ import { UserService } from '../services/user.service'
 
 export class LoanAddView extends ConsoleView {
   static readonly QUIT_SYMBOL = 'Q'
+
+  private initial?: Partial<CreateLoanInputDTO>
 
   constructor(
     private readonly loanService: LoanService,
@@ -17,28 +20,42 @@ export class LoanAddView extends ConsoleView {
   }
 
   async start(initial?: Partial<CreateLoanInputDTO>): Promise<void> {
-    await this.renderPage(initial)
+    this.initial = initial
+    await super.start()
   }
 
   private async renderPage(
     initial?: Partial<CreateLoanInputDTO>
   ): Promise<void> {
-    this.display('\n=== Realizar Empréstimo ===\n')
+    for (;;) {
+      this.display('\n=== Realizar Empréstimo ===\n')
 
-    try {
       const inputBarcode = initial?.bookBarcode ?? (await this.askBookBarcode())
 
       const book = await this.bookService.searchByBarcode(inputBarcode)
 
       if (!book) {
-        throw new Error('Livro não encontrado')
+        this.display('Livro não encontrado.')
+        await this.prompt('Pressione ENTER para continuar...')
+        this.exit()
+        return
+      }
+
+      if (book.status !== BookStatus.AVAILABLE) {
+        this.display('Livro não disponível.')
+        await this.prompt('Pressione ENTER para continuar...')
+        this.exit()
+        return
       }
 
       const inputCpf = initial?.cpf ?? (await this.askClientCpf())
       const user = await this.userService.searchByCpf(inputCpf)
 
       if (!user) {
-        throw new Error('Livro não encontrado')
+        this.display('Usuário não encontrado.')
+        await this.prompt('Pressione ENTER para continuar...')
+        this.exit()
+        return
       }
 
       const loanDate = new Date()
@@ -56,11 +73,13 @@ export class LoanAddView extends ConsoleView {
       }
 
       await this.confirmLoan(loan)
-    } catch (err: unknown) {
-      throw BaseException.fromUnknown(err, {
-        messagePrefix: 'INSERT LOAN: '
-      })
     }
+  }
+
+  catch(err: unknown) {
+    throw BaseException.fromUnknown(err, {
+      messagePrefix: 'INSERT LOAN: '
+    })
   }
 
   private async askBookBarcode(current?: string): Promise<string> {
@@ -114,6 +133,6 @@ export class LoanAddView extends ConsoleView {
   }
 
   protected async update(): Promise<void> {
-    await this.renderPage()
+    await this.renderPage(this.initial)
   }
 }

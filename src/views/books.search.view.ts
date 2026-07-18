@@ -1,6 +1,6 @@
 import { ConsoleView } from './console.view'
-import { ViewFactory } from '../factories/view.factory'
-import { Book } from '../models/Book'
+import { ViewFactory } from '../factories/view.factories'
+import { BookSearchResult } from '../models/BookSearchResult'
 import { BookService } from '../services/book.service'
 
 export class BooksSearchView extends ConsoleView {
@@ -29,7 +29,7 @@ export class BooksSearchView extends ConsoleView {
       case '1': {
         const barcode = await this.prompt('Digite o código de barras: ')
         const result = await this.bookService.searchByBarcode(barcode)
-        await this.renderResults([result].filter((b): b is Book => b !== null))
+        await this.renderResults(result ? [result] : [])
         break
       }
 
@@ -59,18 +59,39 @@ export class BooksSearchView extends ConsoleView {
 
       default:
         this.display('Opção inválida.')
-        await this.prompt('Pressione ENTER para continuar:')
     }
 
     await this.prompt('Pressione ENTER para continuar:')
   }
 
-  private formatBooks(b: Book): string {
-    return `#${String(b.id)} - ${b.name} | Barcode: ${b.barcode} | Autor: ${String(b.authorId)} | Descrição: ${(b.description ?? 'Sem descrição').slice(0, 50)}...`
+  private formatBooks(b: BookSearchResult): string {
+    return [
+      String(b.id).padEnd(6),
+      b.name.slice(0, 60).padEnd(60),
+      b.barcode.padEnd(20),
+      b.author.slice(0, 20).padEnd(20),
+      (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50)
+    ].join(' | ')
   }
 
-  private async renderResults(results: Book[]): Promise<void> {
-    this.display('\n=== Resultado da Pesquisa ===')
+  private readonly header = [
+    'ID'.padEnd(6),
+    'Title'.padEnd(60),
+    'Barcode'.padEnd(20),
+    'Author'.padEnd(20),
+    'Description'.padEnd(50)
+  ].join(' | ')
+
+  private center(text: string, width: number, fill = '='): string {
+    const left = Math.floor((width - text.length) / 2)
+    return text.padStart(left + text.length, fill).padEnd(width, fill)
+  }
+
+  private async renderResults(results: BookSearchResult[]): Promise<void> {
+    this.display(this.center(' Resultado da pesquisa ', this.header.length))
+
+    this.display(this.header)
+    this.display('='.repeat(this.header.length))
 
     if (results.length === 0) {
       this.display('Nenhum livro encontrado.')

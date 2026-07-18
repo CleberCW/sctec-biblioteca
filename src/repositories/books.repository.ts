@@ -5,10 +5,7 @@ import { BaseException } from '../errors/base.exception'
 import { BookRepository } from './domain/repository'
 import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
 import { Book } from '../models/Book'
-
-interface BookSearchResult extends Book {
-  score: number
-}
+import { BookSearchResult } from '../models/BookSearchResult'
 
 export class BooksPostgresRepository implements BookRepository {
   async list(pageSize = 0, offset = 10): Promise<Book[]> {
@@ -123,10 +120,10 @@ export class BooksPostgresRepository implements BookRepository {
   async searchByBarcode(
     barcode: string,
     client?: PoolClient
-  ): Promise<Book | null> {
+  ): Promise<BookSearchResult | null> {
     try {
       const db = client ?? pool
-      const result = await db.query<Book>(
+      const result = await db.query<BookSearchResult>(
         `
       SELECT *
       FROM books

@@ -1,5 +1,5 @@
 import { ConsoleView } from './console.view'
-import { ViewFactory } from '../factories/view.factory'
+import { ViewFactory } from '../factories/view.factories'
 import { Book } from '../models/Book'
 
 export class SelectBooksView extends ConsoleView {
@@ -8,6 +8,10 @@ export class SelectBooksView extends ConsoleView {
     private readonly viewFactory: ViewFactory
   ) {
     super()
+  }
+
+  async start(): Promise<void> {
+    await this.renderMenu()
   }
 
   protected async renderMenu(): Promise<void> {
@@ -26,7 +30,7 @@ export class SelectBooksView extends ConsoleView {
 
     switch (option) {
       case '1':
-        this.loanBook()
+        await this.loanBook()
         break
 
       case '2':
@@ -46,8 +50,10 @@ export class SelectBooksView extends ConsoleView {
     }
   }
 
-  private loanBook() {
-    this.exit()
+  private async loanBook() {
+    await this.viewFactory.createLoanAddView().start({
+      bookBarcode: this.book.barcode
+    })
   }
 
   private editBook() {

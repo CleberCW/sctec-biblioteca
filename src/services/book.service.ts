@@ -9,6 +9,7 @@ import { Result } from '../@common/result/result'
 import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
 import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
 import { Book } from '../models/Book'
+import { BookSearchResult } from '../models/BookSearchResult'
 import { BooksPostgresRepository } from '../repositories/books.repository'
 
 export class BookService {
@@ -88,19 +89,19 @@ export class BookService {
   async searchByBarcode(
     barcode: string,
     client?: PoolClient
-  ): Promise<Book | null> {
+  ): Promise<BookSearchResult | null> {
     return this.bookRepository.searchByBarcode(barcode, client)
   }
 
-  async searchByTitle(title: string): Promise<Book[]> {
+  async searchByTitle(title: string): Promise<BookSearchResult[]> {
     return this.bookRepository.searchByTitle(title)
   }
 
-  async searchByAuthor(author: string): Promise<Book[]> {
+  async searchByAuthor(author: string): Promise<BookSearchResult[]> {
     return this.bookRepository.searchByAuthor(author)
   }
 
-  async searchByKeyword(keyword: string): Promise<Book[]> {
+  async searchByKeyword(keyword: string): Promise<BookSearchResult[]> {
     return this.bookRepository.searchByKeyword(keyword)
   }
 }

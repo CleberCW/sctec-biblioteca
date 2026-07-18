@@ -19,7 +19,7 @@ export class MenuView extends ConsoleView {
     '2': 'Usuários',
     '3': 'Empréstimos',
     '4': 'Relatórios',
-    [MenuView.QUIT_SYMBOL]: '🚪 Sair do Sistema'
+    [MenuView.QUIT_SYMBOL]: 'Sair do Sistema'
   } as const
 
   private isOptionValid(
@@ -34,9 +34,7 @@ export class MenuView extends ConsoleView {
 
   private async selectOption(option: string): Promise<void> {
     if (!this.isOptionValid(option)) {
-      this.display(
-        `${option} não é uma opção válida. Aperte ENTER para continuar.`
-      )
+      this.display(`${option} não é uma opção válida.`)
       await this.prompt('Pressione ENTER para continuar:')
       return
     }
@@ -59,7 +57,6 @@ export class MenuView extends ConsoleView {
         break
       default:
         this.display('Opção inválida.')
-        await this.prompt('Pressione ENTER para continuar:')
     }
   }
 
@@ -76,7 +73,7 @@ export class MenuView extends ConsoleView {
   protected async update() {
     this.showMenu()
 
-    const option = await this.prompt('Escolha uma opção:')
+    const option = await this.prompt('Escolha uma opção: ')
 
     if (
       option === ConsoleView.ABORT_SENTINEL ||

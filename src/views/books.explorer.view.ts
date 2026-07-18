@@ -15,7 +15,13 @@ export class BooksListView extends ConsoleView {
   }
 
   private formatBooks(b: Book): string {
-    return `#${String(b.id)} - ${b.name} | Barcode: ${b.barcode} | Autor: ${String(b.authorId)} | Descrição: ${(b.description ?? 'Sem descrição').slice(0, 50)}...`
+    return [
+      `#${String(b.id)}`.padEnd(6),
+      b.name.padEnd(35),
+      b.barcode.padEnd(20),
+      String(b.authorId).padEnd(8),
+      (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50)
+    ].join(' | ')
   }
 
   private async renderPage(): Promise<void> {

@@ -1,7 +1,7 @@
 import 'dotenv/config'
 
 import { initDatabase } from './config/db'
-import { ViewFactory } from './factories/view.factory'
+import { ViewFactory } from './factories/view.factories'
 import { AuthorPostgresRepository } from './repositories/author.repository'
 import { BooksPostgresRepository } from './repositories/books.repository'
 import { LoanPostgresRepository } from './repositories/loan.repository'
@@ -40,7 +40,13 @@ function bootstrap() {
   const booksListView = new BooksListView(bookService)
   const booksAddView = new BooksAddView(bookService)
   const userService = new UserService(userRepository)
-  const viewFactory = new ViewFactory(bookService, userService)
+  const loanService = new LoanService(
+    loanRepository,
+    userRepository,
+    bookRepository
+  )
+
+  const viewFactory = new ViewFactory(bookService, userService, loanService)
   const booksSearchView = new BooksSearchView(bookService, viewFactory)
   const booksView = new BooksView(booksListView, booksAddView, booksSearchView)
 
@@ -49,11 +55,6 @@ function bootstrap() {
   const usersAddView = new UserAddView(userService)
   const usersView = new UsersView(usersListView, usersSearchView, usersAddView)
 
-  const loanService = new LoanService(
-    loanRepository,
-    userRepository,
-    bookRepository
-  )
   const loansAddView = new LoanAddView(loanService, bookService, userService)
   const loansView = new LoansView(loansAddView)
 

@@ -16,18 +16,25 @@ export class LoanAddView extends ConsoleView {
     super()
   }
 
-  private async renderPage(): Promise<void> {
+  async start(initial?: Partial<CreateLoanInputDTO>): Promise<void> {
+    await this.renderPage(initial)
+  }
+
+  private async renderPage(
+    initial?: Partial<CreateLoanInputDTO>
+  ): Promise<void> {
     this.display('\n=== Realizar Empréstimo ===\n')
 
     try {
-      const inputBarcode = await this.askBookBarcode()
+      const inputBarcode = initial?.bookBarcode ?? (await this.askBookBarcode())
+
       const book = await this.bookService.searchByBarcode(inputBarcode)
 
       if (!book) {
         throw new Error('Livro não encontrado')
       }
 
-      const inputCpf = await this.askClientCpf()
+      const inputCpf = initial?.cpf ?? (await this.askClientCpf())
       const user = await this.userService.searchByCpf(inputCpf)
 
       if (!user) {

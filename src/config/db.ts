@@ -13,5 +13,4 @@ export const pool = new Pool({
 export async function initDatabase() {
   console.log('Iniciando banco de dados...')
   await pool.query('SELECT 1')
-  console.log('Banco de dados iniciado com sucesso!')
 }

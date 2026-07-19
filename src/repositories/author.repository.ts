@@ -1,3 +1,5 @@
+import { PoolClient } from 'pg'
+
 import { pool } from '../config/db'
 import { CreateAuthorDTO } from '../dtos/CreateAuthorDTO'
 import { BaseException } from '../errors/base.exception'
@@ -42,9 +44,10 @@ export class AuthorPostgresRepository implements AuthorRepository {
     }
   }
 
-  async findByName(name: string): Promise<Author | null> {
+  async findByName(name: string, client?: PoolClient): Promise<Author | null> {
     try {
-      const result = await pool.query<Author>(
+      const db = client ?? pool
+      const result = await db.query<Author>(
         `
       SELECT *
       FROM authors
@@ -61,8 +64,12 @@ export class AuthorPostgresRepository implements AuthorRepository {
     }
   }
 
-  async addAuthor(author: CreateAuthorDTO): Promise<number> {
-    const result = await pool.query<{ id: number }>(
+  async addAuthor(
+    author: CreateAuthorDTO,
+    client?: PoolClient
+  ): Promise<number> {
+    const db = client ?? pool
+    const result = await db.query<{ id: number }>(
       `
     INSERT INTO authors (name)
     VALUES ($1)

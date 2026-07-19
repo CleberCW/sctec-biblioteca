@@ -1,9 +1,10 @@
-import { ConsoleView } from './console.view'
+import { BookFormView } from './book.form.view'
 import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
+import { UserCancelledException } from '../errors/user.canceled.exception'
 import { BookService } from '../services/book.service'
 import { BookValidator } from '../validators/BookValidator'
 
-export class BooksAddView extends ConsoleView {
+export class BooksAddView extends BookFormView {
   static readonly QUIT_SYMBOL = 'Q'
 
   constructor(private readonly bookService: BookService) {
@@ -14,6 +15,7 @@ export class BooksAddView extends ConsoleView {
     initial?: Partial<CreateBookInputDTO>
   ): Promise<void> {
     this.display('\n=== Cadastrar Livro ===\n')
+    this.display('(Digite Q para cancelar a operação)\n')
 
     const book: CreateBookInputDTO = {
       title: '',
@@ -25,128 +27,46 @@ export class BooksAddView extends ConsoleView {
       ...initial
     }
 
-    book.isbn = await this.askIsbn(book.isbn)
-    book.title = await this.askTitle(book.title)
-    book.author = await this.askAuthor(book.author)
-    book.description = await this.askDescription(book.description)
-    book.publish_year = await this.askPublishYear(book.publish_year)
-    book.edition = await this.askEdition(book.edition)
-    book.num_pages = await this.askNumPages(book.num_pages)
+    try {
+      await this.fillBookData(book)
+      book.tags = await this.askTags(book.tags)
+    } catch (err) {
+      if (err instanceof UserCancelledException) {
+        this.exit()
+        return
+      }
+
+      throw err
+    }
 
     await this.confirmBook(book)
   }
 
-  private async askIsbn(current?: string): Promise<string | undefined> {
-    const input = (
-      await this.prompt(`ISBN${current ? ` [${current}]` : ''} (opcional): `)
-    ).trim()
-
-    return input === '' ? current : input
-  }
-
-  private async askTitle(current: string): Promise<string> {
-    for (;;) {
-      const input = (
-        await this.prompt(`Título${current ? ` [${current}]` : ''}: `)
-      ).trim()
-
-      const value = input === '' ? current : input
-
-      if (BookValidator.validateTitle(value)) {
-        return value
-      }
-
-      this.display('Título inválido.\n')
-    }
-  }
-
-  private async askAuthor(current: string): Promise<string> {
-    for (;;) {
-      const input = (
-        await this.prompt(`Autor${current ? ` [${current}]` : ''}: `)
-      ).trim()
-
-      const value = input === '' ? current : input
-
-      if (BookValidator.validadeAuthor(value)) {
-        return value
-      }
-
-      this.display('Autor inválido.\n')
-    }
-  }
-
-  private async askDescription(current?: string): Promise<string | undefined> {
-    const input = (
-      await this.prompt(
-        `Descrição${current ? ` [${current}]` : ''} (opcional): `
-      )
-    ).trim()
-
-    return input === '' ? current : input
-  }
-
-  private async askPublishYear(current?: number): Promise<number | undefined> {
+  private async askTags(current: string[] = []): Promise<string[]> {
     for (;;) {
       const input = (
         await this.prompt(
-          `Ano de publicação${current ? ` [${String(current)}]` : ''} (opcional): `
+          `Tags${current.length ? ` [${current.join(', ')}]` : ''} (separadas por vírgula): `
         )
       ).trim()
+
+      this.checkCancelled(input)
 
       if (input === '') {
         return current
       }
 
-      const value = Number(input)
+      const tags = input
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== '')
 
-      if (BookValidator.validatePublishYear(value)) {
-        return value
+      if (tags.length === 0) {
+        this.display('Informe ao menos uma tag válida.')
+        continue
       }
 
-      this.display('Ano de publicação inválido.\n')
-    }
-  }
-
-  private async askEdition(current?: number): Promise<number | undefined> {
-    for (;;) {
-      const input = (
-        await this.prompt(
-          `Edição${current ? ` [${String(current)}]` : ''} (opcional) (somente o número): `
-        )
-      ).trim()
-
-      if (input === '') {
-        return current
-      }
-
-      const value = Number(input)
-
-      if (BookValidator.validateEdition(value)) {
-        return value
-      }
-
-      this.display('Edição inválida.\n')
-    }
-  }
-
-  private async askNumPages(current?: number): Promise<number | undefined> {
-    for (;;) {
-      const input = (
-        await this.prompt(
-          `Número de páginas${current ? ` [${String(current)}]` : ''} (opcional): `
-        )
-      ).trim()
-
-      if (input === '') {
-        return current
-      }
-
-      const value = Number(input)
-
-      if (BookValidator.validateNumPages(value)) {
-        return value
-      }
+      return [...new Set(tags)]
     }
   }
 
@@ -160,6 +80,7 @@ export class BooksAddView extends ConsoleView {
         Ano de publicação: ${String(book.publish_year ?? 'N/A')},
         Edição: ${String(book.edition ?? 'N/A')},
         Número de páginas: ${String(book.num_pages ?? 'N/A')},
+        Tag(s): ${book.tags?.join(', ') ?? 'N/A'},
 
         =============================================================
         
@@ -212,7 +133,7 @@ export class BooksAddView extends ConsoleView {
         Descrição: ${metadata.synopsis ?? 'N/A'},
         Ano de publicação: ${metadata.year ? String(metadata.year) : 'N/A'}, 
         Número de páginas: ${metadata.pageCount ? String(metadata.pageCount) : 'N/A'},
-        Assunto(s): ${metadata.subjects.join(', ')},
+        Tag(s): ${metadata.subjects.join(', ')},
 
         =============================================================
         
@@ -231,7 +152,8 @@ export class BooksAddView extends ConsoleView {
           description: metadata.synopsis ?? undefined,
           publish_year: metadata.year ?? undefined,
           edition: undefined,
-          num_pages: metadata.pageCount ?? undefined
+          num_pages: metadata.pageCount ?? undefined,
+          tags: metadata.subjects
         }
         await this.bookService.add(bookToAdd)
         this.display('Livro cadastrado com sucesso!')
@@ -253,7 +175,8 @@ export class BooksAddView extends ConsoleView {
           description: metadata.synopsis ?? undefined,
           publish_year: metadata.year ?? undefined,
           edition: undefined,
-          num_pages: metadata.pageCount ?? undefined
+          num_pages: metadata.pageCount ?? undefined,
+          tags: metadata.subjects
         })
         this.exit()
         break

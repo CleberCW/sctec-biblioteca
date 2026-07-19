@@ -1,4 +1,5 @@
 import { ConsoleView } from './console.view'
+import { BaseException } from '../errors/base.exception'
 import { ViewFactory } from '../factories/view.factories'
 import { User } from '../models/User'
 import { UserService } from '../services/user.service'
@@ -25,40 +26,50 @@ export class UserSearchView extends ConsoleView {
       .trim()
       .toUpperCase()
 
-    switch (option) {
-      case '1': {
-        const cpf = await this.prompt('Digite o CPF: ')
-        const result = await this.userService.searchByCpf(cpf)
-        await this.renderResults(result ? [result] : [])
-        break
+    try {
+      switch (option) {
+        case '1': {
+          const cpf = await this.prompt('Digite o CPF: ')
+          const result = await this.userService.searchByCpf(cpf)
+          await this.renderResults(result ? [result] : [])
+          break
+        }
+
+        case '2': {
+          const name = await this.prompt('Digite o nome: ')
+          const results = await this.userService.searchByName(name)
+          await this.renderResults(results)
+          break
+        }
+        case '3': {
+          const email = await this.prompt('Digite o email: ')
+          const results = await this.userService.searchByEmail(email)
+          await this.renderResults(results)
+          break
+        }
+
+        case '4': {
+          const phone = await this.prompt('Digite o telefone: ')
+          const results = await this.userService.searchByPhone(phone)
+          await this.renderResults(results)
+          break
+        }
+
+        case 'Q':
+          this.exit()
+          break
+
+        default:
+          this.display('Opção inválida.')
+      }
+    } catch (err) {
+      if (err instanceof BaseException) {
+        this.display(err.message)
+        await this.prompt('Pressione ENTER para continuar:')
+        return
       }
 
-      case '2': {
-        const name = await this.prompt('Digite o nome: ')
-        const results = await this.userService.searchByName(name)
-        await this.renderResults(results)
-        break
-      }
-      case '3': {
-        const email = await this.prompt('Digite o email: ')
-        const results = await this.userService.searchByEmail(email)
-        await this.renderResults(results)
-        break
-      }
-
-      case '4': {
-        const phone = await this.prompt('Digite o telefone: ')
-        const results = await this.userService.searchByPhone(phone)
-        await this.renderResults(results)
-        break
-      }
-
-      case 'Q':
-        this.exit()
-        break
-
-      default:
-        this.display('Opção inválida.')
+      throw err
     }
   }
 

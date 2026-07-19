@@ -2,18 +2,23 @@ import { PoolClient } from 'pg'
 
 import { AuthorService } from './author.service'
 import { BrasilApiIsbnProvider } from './isbn.service'
+import { TagService } from './tag.service'
 import { NativeHttpService } from '../@common/http/impl/native-http.service'
 import { Result } from '../@common/result/result'
+import { pool } from '../config/db'
 import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
 import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
 import { EditBookInputDTO } from '../dtos/EditBookInputDTO'
+import { BaseException } from '../errors/base.exception'
 import { BookSearchResult } from '../models/BookSearchResult'
 import { BooksPostgresRepository } from '../repositories/books.repository'
+import { BookValidator } from '../validators/BookValidator'
 
 export class BookService {
   constructor(
     private readonly bookRepository: BooksPostgresRepository,
-    private readonly authorService: AuthorService
+    private readonly authorService: AuthorService,
+    private readonly tagService: TagService
   ) {}
 
   async list(): Promise<BookSearchResult[]> {
@@ -21,18 +26,39 @@ export class BookService {
   }
 
   async add(book: CreateBookInputDTO): Promise<Result<void>> {
-    const authorId = await this.authorService.findOrCreate({
-      name: book.author
-    })
+    const client = await pool.connect()
 
-    const bookToAdd: CreateBookRepositoryDTO = {
-      ...book,
-      authorId
+    try {
+      await client.query('BEGIN')
+
+      const authorId = await this.authorService.findOrCreate(
+        {
+          name: book.author
+        },
+        client
+      )
+
+      const bookToAdd: CreateBookRepositoryDTO = {
+        ...book,
+        authorId
+      }
+
+      const bookId = await this.bookRepository.addBook(bookToAdd, client)
+
+      for (const tag of book.tags ?? []) {
+        const returnedTag = await this.tagService.findOrCreate(tag, client)
+
+        await this.bookRepository.addTag(bookId, returnedTag.id, client)
+      }
+
+      await client.query('COMMIT')
+
+      return Result.void()
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'ADD BOOK: '
+      })
     }
-
-    await this.bookRepository.addBook(bookToAdd)
-
-    return Result.void()
   }
 
   async remove(id: number): Promise<Result<void, 'not-found'>> {
@@ -75,14 +101,30 @@ export class BookService {
     isbn: string,
     client?: PoolClient
   ): Promise<BookSearchResult[]> {
+    if (!BookValidator.validateIsbn(isbn)) {
+      throw new BaseException({
+        cause: 'ISBN inválido'
+      })
+    }
+
     return this.bookRepository.searchByIsbn(isbn, client)
   }
 
   async searchByTitle(title: string): Promise<BookSearchResult[]> {
+    if (!BookValidator.validateTitle(title)) {
+      throw new BaseException({
+        cause: 'Título inválido'
+      })
+    }
     return this.bookRepository.searchByTitle(title)
   }
 
   async searchByAuthor(author: string): Promise<BookSearchResult[]> {
+    if (!BookValidator.validadeAuthor(author)) {
+      throw new BaseException({
+        cause: 'Autor inválido'
+      })
+    }
     return this.bookRepository.searchByAuthor(author)
   }
 
@@ -100,8 +142,47 @@ export class BookService {
       return Result.fail('not-found')
     }
 
-    await this.bookRepository.update(id, info)
+    const client = await pool.connect()
 
-    return Result.void()
+    try {
+      await client.query('BEGIN')
+
+      const authorName = info.author
+
+      await this.authorService.findOrCreate(
+        {
+          name: authorName
+        },
+        client
+      )
+
+      await this.bookRepository.update(
+        id,
+        {
+          ...info,
+          author: authorName
+        },
+        client
+      )
+
+      if (info.tags) {
+        const tags = await Promise.all(
+          info.tags.map((tag) => this.tagService.findOrCreate(tag.name, client))
+        )
+
+        await this.bookRepository.replaceTags(
+          id,
+          tags.map((tag) => tag.id),
+          client
+        )
+      }
+
+      await client.query('COMMIT')
+      return Result.void()
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'ADD BOOK: '
+      })
+    }
   }
 }

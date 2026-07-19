@@ -6,4 +6,5 @@ export interface CreateBookInputDTO {
   publish_year?: number
   edition?: number
   num_pages?: number
+  tags?: string[]
 }

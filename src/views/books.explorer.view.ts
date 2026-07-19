@@ -20,7 +20,8 @@ export class BooksListView extends PaginatedConsoleView<
     'Title'.padEnd(60),
     'Barcode'.padEnd(20),
     'Author'.padEnd(20),
-    'Description'.padEnd(50)
+    'Description'.padEnd(50),
+    'Tags'.padEnd(50)
   ].join(' | ')
 
   protected override async fetchPage(
@@ -48,7 +49,8 @@ export class BooksListView extends PaginatedConsoleView<
       book.title.slice(0, 60).padEnd(60),
       (book.isbn ?? 'Sem ISBN').padEnd(20),
       book.author.slice(0, 20).padEnd(20),
-      (book.description ?? 'Sem descrição').slice(0, 50).padEnd(50)
+      (book.description ?? 'Sem descrição').slice(0, 50).padEnd(50),
+      (book.tags ?? 'Sem tags').slice(0, 50).padEnd(50)
     ].join(' | ')
   }
 

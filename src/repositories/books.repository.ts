@@ -14,11 +14,17 @@ export class BooksPostgresRepository implements BookRepository {
       const result = await pool.query<BookSearchResult>(
         `
       SELECT
-        b.*,
-        a.name AS author
+          b.*,
+          a.name AS author,
+          string_agg(t.name, ', ' ORDER BY t.name) AS tags
       FROM books b
-      JOIN authors a ON a.id = b.author_id
-      ORDER BY id
+      JOIN authors a
+          ON a.id = b.author_id
+      LEFT JOIN book_tags bt
+          ON bt.book_id = b.id
+      LEFT JOIN tags t
+          ON t.id = bt.tag_id
+      GROUP BY b.id, a.name
       LIMIT $1 OFFSET $2;
       `,
         [pageSize, offset]
@@ -49,9 +55,14 @@ export class BooksPostgresRepository implements BookRepository {
     }
   }
 
-  async addBook(book: CreateBookRepositoryDTO): Promise<void> {
+  async addBook(
+    book: CreateBookRepositoryDTO,
+    client?: PoolClient
+  ): Promise<number> {
     try {
-      await pool.query(
+      const db = client ?? pool
+
+      const { rows } = await db.query<{ id: number }>(
         `
       INSERT INTO books (
         isbn,
@@ -65,7 +76,8 @@ export class BooksPostgresRepository implements BookRepository {
       VALUES (
         $1, $2, $3, $4, $5,
         $6, $7
-      );
+      )
+      RETURNING id;
       `,
         [
           book.isbn,
@@ -77,6 +89,8 @@ export class BooksPostgresRepository implements BookRepository {
           book.numPages
         ]
       )
+
+      return rows[0].id
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'INSERT BOOK: '
@@ -232,17 +246,23 @@ export class BooksPostgresRepository implements BookRepository {
       SELECT
           b.*,
           a.name AS author,
-          t.name AS tag
+          string_agg(t.name, ', ' ORDER BY t.name) AS tags
       FROM books b
-      JOIN authors a ON a.id = b.author_id
+      JOIN authors a
+          ON a.id = b.author_id
       JOIN book_tags bt
           ON bt.book_id = b.id
       JOIN tags t
           ON t.id = bt.tag_id
-      WHERE
-          t.name ILIKE '%' || $1 || '%'
-      ORDER BY
-          b.id ASC;`,
+      WHERE EXISTS (
+          SELECT 1
+          FROM book_tags bt2
+          JOIN tags t2
+              ON t2.id = bt2.tag_id
+          WHERE bt2.book_id = b.id
+            AND t2.name ILIKE '%' || $1 || '%'
+      )
+      GROUP BY b.id, a.name;`,
         [keyword]
       )
 
@@ -269,8 +289,13 @@ export class BooksPostgresRepository implements BookRepository {
     )
   }
 
-  async update(id: number, dto: EditBookInputDTO): Promise<void> {
-    await pool.query(
+  async update(
+    id: number,
+    dto: EditBookInputDTO,
+    client?: PoolClient
+  ): Promise<void> {
+    const db = client ?? pool
+    await db.query(
       `
     UPDATE books
     SET
@@ -293,5 +318,54 @@ export class BooksPostgresRepository implements BookRepository {
         dto.num_pages
       ]
     )
+  }
+
+  async replaceTags(
+    bookId: number,
+    tagIds: number[],
+    client?: PoolClient
+  ): Promise<void> {
+    const db = client ?? pool
+
+    await db.query(
+      `
+    DELETE FROM book_tags
+    WHERE book_id = $1;
+    `,
+      [bookId]
+    )
+
+    for (const tagId of tagIds) {
+      await db.query(
+        `
+      INSERT INTO book_tags (book_id, tag_id)
+      VALUES ($1, $2);
+      `,
+        [bookId, tagId]
+      )
+    }
+  }
+
+  async addTag(
+    bookId: number,
+    tagId: number,
+    client?: PoolClient
+  ): Promise<void> {
+    try {
+      const db = client ?? pool
+
+      await db.query(
+        `
+      INSERT INTO book_tags (book_id, tag_id)
+      VALUES ($1, $2)
+      ON CONFLICT DO NOTHING;
+      `,
+        [bookId, tagId]
+      )
+    } catch (err) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'ADD BOOK TAG: '
+      })
+    }
   }
 }

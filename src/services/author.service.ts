@@ -1,3 +1,5 @@
+import { PoolClient } from 'pg'
+
 import { Result } from '../@common/result/result'
 import { CreateAuthorDTO } from '../dtos/CreateAuthorDTO'
 import { Author } from '../models/Author'
@@ -20,10 +22,13 @@ export class AuthorService {
     return Result.ok(authorId)
   }
 
-  async findOrCreate(name: CreateAuthorDTO): Promise<number> {
+  async findOrCreate(
+    name: CreateAuthorDTO,
+    client?: PoolClient
+  ): Promise<number> {
     const authorId =
-      (await this.authorRepository.findByName(name.name))?.id ??
-      (await this.authorRepository.addAuthor({ name: name.name }))
+      (await this.authorRepository.findByName(name.name, client))?.id ??
+      (await this.authorRepository.addAuthor({ name: name.name }, client))
 
     return authorId
   }

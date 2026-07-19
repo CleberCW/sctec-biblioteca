@@ -1,4 +1,5 @@
 import { ConsoleView } from './console.view'
+import { BaseException } from '../errors/base.exception'
 import { ViewFactory } from '../factories/view.factories'
 import { BookSearchResult } from '../models/BookSearchResult'
 import { BookService } from '../services/book.service'
@@ -11,6 +12,23 @@ export class BooksSearchView extends ConsoleView {
     private readonly viewFactory: ViewFactory
   ) {
     super()
+  }
+
+  private async executeSearch(
+    action: () => Promise<BookSearchResult[]>
+  ): Promise<void> {
+    try {
+      const results = await action()
+      await this.renderResults(results)
+    } catch (err) {
+      if (err instanceof BaseException) {
+        this.display(err.message)
+        await this.prompt('Pressione ENTER para continuar:')
+        return
+      }
+
+      throw err
+    }
   }
 
   private async renderMenu(): Promise<void> {
@@ -26,32 +44,33 @@ export class BooksSearchView extends ConsoleView {
       .toUpperCase()
 
     switch (option) {
-      case '1': {
-        const isbn = await this.prompt('Digite o ISBN: ')
-        const results = await this.bookService.searchByIsbn(isbn)
-        await this.renderResults(results)
+      case '1':
+        await this.executeSearch(async () => {
+          const isbn = (await this.prompt('Digite o ISBN: ')).trim()
+          return this.bookService.searchByIsbn(isbn)
+        })
         break
-      }
 
       case '2': {
-        const title = await this.prompt('Digite o título: ')
-        const results = await this.bookService.searchByTitle(title)
-        await this.renderResults(results)
+        await this.executeSearch(async () => {
+          const title = (await this.prompt('Digite o título do livro: ')).trim()
+          return this.bookService.searchByTitle(title)
+        })
         break
       }
-      case '3': {
-        const author = await this.prompt('Digite o autor: ')
-        const results = await this.bookService.searchByAuthor(author)
-        await this.renderResults(results)
+      case '3':
+        await this.executeSearch(async () => {
+          const author = (await this.prompt('Digite o autor: ')).trim()
+          return this.bookService.searchByAuthor(author)
+        })
         break
-      }
 
-      case '4': {
-        const keyword = await this.prompt('Digite a palavra-chave: ')
-        const results = await this.bookService.searchByKeyword(keyword)
-        await this.renderResults(results)
+      case '4':
+        await this.executeSearch(async () => {
+          const keyword = (await this.prompt('Digite a palavra-chave: ')).trim()
+          return this.bookService.searchByKeyword(keyword)
+        })
         break
-      }
 
       case 'Q':
         this.exit()
@@ -68,16 +87,18 @@ export class BooksSearchView extends ConsoleView {
       b.title.slice(0, 60).padEnd(60),
       (b.isbn ?? 'Sem ISBN').padEnd(20),
       b.author.slice(0, 20).padEnd(20),
-      (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50)
+      (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50),
+      (b.tags ?? '').slice(0, 50).padEnd(50)
     ].join(' | ')
   }
 
   private readonly header = [
     'ID'.padEnd(6),
-    'Title'.padEnd(60),
-    'Barcode'.padEnd(20),
-    'Author'.padEnd(20),
-    'Description'.padEnd(50)
+    'Título'.padEnd(60),
+    'ISBN'.padEnd(20),
+    'Autor'.padEnd(20),
+    'Descrição'.padEnd(50),
+    'Tags'.padEnd(50)
   ].join(' | ')
 
   private center(text: string, width: number, fill = '='): string {

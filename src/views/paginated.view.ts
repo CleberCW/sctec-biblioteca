@@ -20,7 +20,7 @@ export abstract class PaginatedConsoleView<T, TPage> extends ConsoleView {
   protected abstract renderFooter(hasPrevious: boolean, hasNext: boolean): void
 
   protected async handleCustomOption(_option: string): Promise<void> {
-    // Hook para subclasses.
+    // Caso a view tenha op0ções adicionais
   }
 
   protected pageData?: TPage

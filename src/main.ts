@@ -5,10 +5,12 @@ import { ViewFactory } from './factories/view.factories'
 import { AuthorPostgresRepository } from './repositories/author.repository'
 import { BooksPostgresRepository } from './repositories/books.repository'
 import { LoanPostgresRepository } from './repositories/loan.repository'
+import { TagsPostgresRepository } from './repositories/tag.repository'
 import { UserPostgresRepository } from './repositories/user.repository'
 import { AuthorService } from './services/author.service'
 import { BookService } from './services/book.service'
 import { LoanService } from './services/loan.service'
+import { TagService } from './services/tag.service'
 import { UserService } from './services/user.service'
 import { BooksAddView } from './views/books.add.view'
 import { BooksListView } from './views/books.explorer.view'
@@ -38,13 +40,16 @@ function bootstrap() {
   const bookRepository = new BooksPostgresRepository()
   const loanRepository = new LoanPostgresRepository()
   const userRepository = new UserPostgresRepository()
+  const tagRepository = new TagsPostgresRepository()
   const userService = new UserService(userRepository)
   const loanService = new LoanService(
     loanRepository,
     userRepository,
     bookRepository
   )
-  const bookService = new BookService(bookRepository, authorService)
+  const tagService = new TagService(tagRepository)
+
+  const bookService = new BookService(bookRepository, authorService, tagService)
 
   const viewFactory = new ViewFactory(bookService, userService, loanService)
 

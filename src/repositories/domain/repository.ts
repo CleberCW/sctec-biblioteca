@@ -7,6 +7,7 @@ import { CreateUserDTO } from '../../dtos/CreateUserDTO'
 import { Author } from '../../models/Author'
 import { Book } from '../../models/Book'
 import { BookLoan } from '../../models/BookLoan'
+import { ListLoansOptions } from '../../models/ListLoanOptions'
 import { User } from '../../models/User'
 
 export interface BookRepository {
@@ -28,7 +29,7 @@ export interface UserRepository {
 }
 
 export interface LoanRepository {
-  list(pageSize: number, offset: number): Promise<BookLoan[]>
+  list(options?: ListLoansOptions): Promise<BookLoan[]>
   count(): Promise<number>
   addLoan(loan: CreateLoanRepositoryDTO, client: PoolClient): Promise<number>
   finishLoan(id: number, date: Date): Promise<number>

@@ -279,7 +279,7 @@ export class BooksPostgresRepository implements BookRepository {
         description = $4,
         publish_year = $5,
         edition = $6,
-        num_pages = $7
+        num_pages = $7,
         last_edited_at = NOW()
     WHERE id = $1;
     `,

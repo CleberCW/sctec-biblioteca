@@ -15,6 +15,8 @@ import { BooksListView } from './views/books.explorer.view'
 import { BooksSearchView } from './views/books.search.view'
 import { BooksView } from './views/books.view'
 import { LoanAddView } from './views/loan.add.view'
+import { LoansListView } from './views/loan.explorer.view'
+import { LoanReturnView } from './views/loan.return.view'
 import { LoansView } from './views/loans.view'
 import { MenuView } from './views/menu.view'
 import { ReportsView } from './views/reports.view'
@@ -58,7 +60,9 @@ function bootstrap() {
   const usersView = new UsersView(usersListView, usersSearchView, usersAddView)
 
   const loansAddView = new LoanAddView(loanService, bookService, userService)
-  const loansView = new LoansView(loansAddView)
+  const loanReturnView = new LoanReturnView(loanService, userService)
+  const loanListView = new LoansListView(loanService)
+  const loansView = new LoansView(loansAddView, loanReturnView, loanListView)
 
   const reportsView = new ReportsView(bookService, loanService)
 

@@ -4,6 +4,7 @@ import { CreateLoanInputDTO } from '../dtos/CreateLoanInputDTO'
 import { BookStatus } from '../enums/BookStatus'
 import { BaseException } from '../errors/base.exception'
 import { BookLoanResult } from '../models/BookLoanSearchResult'
+import { ListLoansOptions } from '../models/ListLoanOptions'
 import { BooksPostgresRepository } from '../repositories/books.repository'
 import { LoanPostgresRepository } from '../repositories/loan.repository'
 import { UserPostgresRepository } from '../repositories/user.repository'
@@ -15,8 +16,24 @@ export class LoanService {
     private readonly bookRepository: BooksPostgresRepository
   ) {}
 
-  async list(): Promise<BookLoanResult[]> {
-    return this.loanRepository.list()
+  async list(options?: ListLoansOptions): Promise<BookLoanResult[]> {
+    return this.loanRepository.list(options)
+  }
+
+  async getPage(page: number, pageSize: number) {
+    const offset = (page - 1) * pageSize
+
+    const books = await this.loanRepository.list({
+      pageSize: pageSize,
+      offset: offset
+    })
+    const total = await this.loanRepository.count()
+
+    return {
+      books,
+      totalPages: Math.ceil(total / pageSize),
+      page
+    }
   }
 
   async addLoan(dto: CreateLoanInputDTO): Promise<number> {
@@ -68,14 +85,29 @@ export class LoanService {
 
   async finishLoan(
     id: number,
+    bookId: number,
     date: Date
-  ): Promise<Result<number, 'not-found'>> {
-    const loanId = await this.loanRepository.finishLoan(id, date)
+  ): Promise<Result<void, 'not-found'>> {
+    const client = await pool.connect()
 
-    if (!loanId) {
-      return Result.fail('not-found')
+    try {
+      await client.query('BEGIN')
+
+      const loanId = await this.loanRepository.finishLoan(id, date, client)
+
+      if (!loanId) {
+        return Result.fail('not-found')
+      }
+
+      await this.bookRepository.updateStatus(bookId, BookStatus.LOANED, client)
+
+      await client.query('COMMIT')
+
+      return Result.void()
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'ADD LOAN: '
+      })
     }
-
-    return Result.ok(loanId)
   }
 }

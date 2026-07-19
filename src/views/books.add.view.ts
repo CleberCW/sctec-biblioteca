@@ -21,7 +21,7 @@ export class BooksAddView extends ConsoleView {
       description: undefined,
       publish_year: undefined,
       edition: undefined,
-      numPages: undefined,
+      num_pages: undefined,
       ...initial
     }
 
@@ -31,7 +31,7 @@ export class BooksAddView extends ConsoleView {
     book.description = await this.askDescription(book.description)
     book.publish_year = await this.askPublishYear(book.publish_year)
     book.edition = await this.askEdition(book.edition)
-    book.numPages = await this.askNumPages(book.numPages)
+    book.num_pages = await this.askNumPages(book.num_pages)
 
     await this.confirmBook(book)
   }
@@ -159,7 +159,7 @@ export class BooksAddView extends ConsoleView {
         Descrição: ${book.description ?? 'N/A'},
         Ano de publicação: ${String(book.publish_year ?? 'N/A')},
         Edição: ${String(book.edition ?? 'N/A')},
-        Número de páginas: ${String(book.numPages ?? 'N/A')},
+        Número de páginas: ${String(book.num_pages ?? 'N/A')},
 
         =============================================================
         
@@ -231,7 +231,7 @@ export class BooksAddView extends ConsoleView {
           description: metadata.synopsis ?? undefined,
           publish_year: metadata.year ?? undefined,
           edition: undefined,
-          numPages: metadata.pageCount ?? undefined
+          num_pages: metadata.pageCount ?? undefined
         }
         await this.bookService.add(bookToAdd)
         this.display('Livro cadastrado com sucesso!')
@@ -253,7 +253,7 @@ export class BooksAddView extends ConsoleView {
           description: metadata.synopsis ?? undefined,
           publish_year: metadata.year ?? undefined,
           edition: undefined,
-          numPages: metadata.pageCount ?? undefined
+          num_pages: metadata.pageCount ?? undefined
         })
         this.exit()
         break

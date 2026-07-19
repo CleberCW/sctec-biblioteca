@@ -1,3 +1,4 @@
+import { BookCondition } from '../enums/BookCondition'
 import { BookStatus } from '../enums/BookStatus'
 
 export interface Book {
@@ -11,4 +12,5 @@ export interface Book {
   edition: number | null
   num_pages: number | null
   status: BookStatus
+  condition: BookCondition
 }

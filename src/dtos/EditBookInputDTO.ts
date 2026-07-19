@@ -1,3 +1,6 @@
+import { BookCondition } from '../enums/BookCondition'
+import { BookStatus } from '../enums/BookStatus'
+
 export interface EditBookInputDTO {
   isbn?: string
   title: string
@@ -6,4 +9,6 @@ export interface EditBookInputDTO {
   publish_year?: number
   edition?: number
   num_pages?: number
+  status: BookStatus
+  condition: BookCondition
 }

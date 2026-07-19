@@ -1,6 +1,7 @@
 import { ConsoleView } from './console.view'
-import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
 import { EditBookInputDTO } from '../dtos/EditBookInputDTO'
+import { BookCondition } from '../enums/BookCondition'
+import { BookStatus } from '../enums/BookStatus'
 import { BookSearchResult } from '../models/BookSearchResult'
 import { BookService } from '../services/book.service'
 import { BookValidator } from '../validators/BookValidator'
@@ -16,18 +17,20 @@ export class BookEditView extends ConsoleView {
   }
 
   private async renderPage(): Promise<void> {
-    this.display('\n=== Cadastrar Livro ===\n')
+    this.display('\n=== Editar Livro ===\n')
 
     console.log(this.book)
 
-    const book: CreateBookInputDTO = {
+    const book: EditBookInputDTO = {
       isbn: this.book.isbn ?? undefined,
       title: this.book.title,
       author: this.book.author,
       description: this.book.description ?? undefined,
       publish_year: this.book.publish_year ?? undefined,
       edition: this.book.edition ?? undefined,
-      numPages: this.book.num_pages ?? undefined
+      num_pages: this.book.num_pages ?? undefined,
+      status: this.book.status,
+      condition: this.book.condition
     }
 
     book.isbn = await this.askIsbn(book.isbn)
@@ -36,7 +39,9 @@ export class BookEditView extends ConsoleView {
     book.description = await this.askDescription(book.description)
     book.publish_year = await this.askPublishYear(book.publish_year)
     book.edition = await this.askEdition(book.edition)
-    book.numPages = await this.askNumPages(book.numPages)
+    book.num_pages = await this.askNumPages(book.num_pages)
+    book.condition = await this.askCondition(book.condition)
+    book.status = await this.askStatus(book.status)
 
     await this.confirmBook(book)
   }
@@ -155,6 +160,77 @@ export class BookEditView extends ConsoleView {
     }
   }
 
+  private async askCondition(current?: BookCondition): Promise<BookCondition> {
+    const options = [
+      BookCondition.GOOD,
+      BookCondition.AVERAGE,
+      BookCondition.POOR
+    ]
+
+    for (;;) {
+      this.display('\nCondição do livro:')
+
+      options.forEach((condition, index) => {
+        this.display(`[${String(index + 1)}] ${condition}`)
+      })
+
+      const input = (
+        await this.prompt(
+          `Escolha uma opção${current ? ` [${current}]` : ''}: `
+        )
+      ).trim()
+
+      if (input === '' && current) {
+        return current
+      }
+
+      const index = Number(input) - 1
+
+      if (index >= 0 && index < options.length) {
+        return options[index]
+      }
+
+      this.display('Condição inválida.\n')
+    }
+  }
+
+  private async askStatus(current?: BookStatus): Promise<BookStatus> {
+    if (current === BookStatus.LOANED) {
+      return current
+    }
+    const options = [
+      BookStatus.AVAILABLE,
+      BookStatus.MAINTENANCE,
+      BookStatus.LOST
+    ]
+
+    for (;;) {
+      this.display('\nStatus do livro:')
+
+      options.forEach((status, index) => {
+        this.display(`[${String(index + 1)}] ${status}`)
+      })
+
+      const input = (
+        await this.prompt(
+          `Escolha uma opção${current ? ` [${current}]` : ''}: `
+        )
+      ).trim()
+
+      if (input === '' && current) {
+        return current
+      }
+
+      const index = Number(input) - 1
+
+      if (index >= 0 && index < options.length) {
+        return options[index]
+      }
+
+      this.display('Status inválido.\n')
+    }
+  }
+
   private async confirmBook(info: EditBookInputDTO): Promise<void> {
     this.display(`
         =============================================================
@@ -166,6 +242,8 @@ export class BookEditView extends ConsoleView {
         Ano de publicação: ${String(info.publish_year ?? 'N/A')},
         Edição: ${String(info.edition ?? 'N/A')},
         Número de páginas: ${String(info.num_pages ?? 'N/A')},
+        Condição: ${info.condition}
+        Status: ${info.status}
 
         =============================================================
         

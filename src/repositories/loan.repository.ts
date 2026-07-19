@@ -7,24 +7,48 @@ import { LoanRepository } from './domain/repository'
 import { BookLoanResult } from '../models/BookLoanSearchResult'
 
 export class LoanPostgresRepository implements LoanRepository {
-  async list(pageSize?: number, offset = 0): Promise<BookLoanResult[]> {
+  async list(options?: {
+    pageSize?: number
+    offset?: number
+    userId?: number
+    notReturned?: boolean
+  }): Promise<BookLoanResult[]> {
     try {
       let query = `
       SELECT
         bl.*,
-        b.name AS title,
+        b.title,
         u.name AS "userName"
       FROM book_loans bl
       JOIN books b ON b.id = bl.book_id
       JOIN users u ON u.id = bl.user_id
-      ORDER BY bl.id;
     `
 
-      const params: number[] = []
+      const params: unknown[] = []
 
-      if (pageSize !== undefined) {
-        query += ` LIMIT $1 OFFSET $2`
-        params.push(pageSize, offset)
+      const conditions: string[] = []
+
+      if (options?.userId !== undefined) {
+        params.push(options.userId)
+        conditions.push(`u.id = $${String(params.length)}`)
+      }
+
+      if (options?.notReturned) {
+        conditions.push(`bl.returned_at IS NULL`)
+      }
+
+      if (conditions.length > 0) {
+        query += ` WHERE ${conditions.join(' AND ')}`
+      }
+
+      query += ` ORDER BY bl.id`
+
+      if (options?.pageSize !== undefined) {
+        params.push(options.pageSize)
+        query += ` LIMIT $${String(params.length)}`
+
+        params.push(options.offset ?? 0)
+        query += ` OFFSET $${String(params.length)}`
       }
 
       const result = await pool.query<BookLoanResult>(query, params)
@@ -76,12 +100,17 @@ export class LoanPostgresRepository implements LoanRepository {
     }
   }
 
-  async finishLoan(id: number, date: Date): Promise<number> {
+  async finishLoan(
+    id: number,
+    date: Date,
+    client?: PoolClient
+  ): Promise<number> {
     try {
-      const result = await pool.query<{ id: number }>(
+      const db = client ?? pool
+      const result = await db.query<{ id: number }>(
         `
       UPDATE book_loans
-      SET return_date = $1
+      SET returned_at = $1
       WHERE id = $2
       RETURNING id;
       `,

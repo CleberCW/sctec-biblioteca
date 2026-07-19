@@ -17,6 +17,7 @@ export class SelectBooksView extends ConsoleView {
     this.display(
       `Descrição: ${(this.book.description ?? 'Sem descrição').slice(0, 100)}...`
     )
+    this.display(`Status: ${this.book.status}`)
 
     this.display('')
     this.display('[1] Emprestar')

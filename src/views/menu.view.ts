@@ -64,7 +64,7 @@ export class MenuView extends ConsoleView {
 
   private showMenu(): void {
     this.display('\n======================================')
-    this.display(' 🏛️  Biblioteca  🏛️')
+    this.display('         🏛️   Biblioteca  🏛️')
     this.display('======================================')
     Object.entries(this.MENU_OPTIONS).forEach(([key, value]) => {
       this.display(`${key}. ${value}`)

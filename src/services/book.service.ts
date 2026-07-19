@@ -21,8 +21,12 @@ export class BookService {
     private readonly tagService: TagService
   ) {}
 
-  async list(): Promise<BookSearchResult[]> {
-    return this.bookRepository.list()
+  async list(pageSize?: number, offset?: number): Promise<BookSearchResult[]> {
+    return this.bookRepository.list(pageSize, offset)
+  }
+
+  async listAvailable(): Promise<BookSearchResult[]> {
+    return this.bookRepository.listAvailable()
   }
 
   async add(book: CreateBookInputDTO): Promise<Result<void>> {

@@ -9,7 +9,7 @@ import { BookStatus } from '../enums/BookStatus'
 import { BookSearchResult } from '../models/BookSearchResult'
 
 export class BooksPostgresRepository implements BookRepository {
-  async list(pageSize = 0, offset = 10): Promise<BookSearchResult[]> {
+  async list(pageSize = 10, offset = 0): Promise<BookSearchResult[]> {
     try {
       const result = await pool.query<BookSearchResult>(
         `
@@ -365,6 +365,28 @@ export class BooksPostgresRepository implements BookRepository {
     } catch (err) {
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'ADD BOOK TAG: '
+      })
+    }
+  }
+
+  async listAvailable() {
+    try {
+      const result = await pool.query<BookSearchResult>(
+        `
+      SELECT
+          b.*,
+          a.name AS author
+      FROM books b
+      JOIN authors a
+          ON a.id = b.author_id
+      WHERE b.status = 'available'
+      `
+      )
+
+      return result.rows
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'BOOKS: '
       })
     }
   }

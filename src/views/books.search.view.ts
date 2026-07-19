@@ -82,10 +82,12 @@ export class BooksSearchView extends ConsoleView {
   }
 
   private formatBooks(b: BookSearchResult): string {
+    console.log(b)
     return [
       String(b.id).padEnd(6),
       b.title.slice(0, 60).padEnd(60),
       (b.isbn ?? 'Sem ISBN').padEnd(20),
+      b.status.slice(0, 20).padEnd(20),
       b.author.slice(0, 20).padEnd(20),
       (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50),
       (b.tags ?? '').slice(0, 50).padEnd(50)
@@ -96,6 +98,7 @@ export class BooksSearchView extends ConsoleView {
     'ID'.padEnd(6),
     'Título'.padEnd(60),
     'ISBN'.padEnd(20),
+    'Status'.padEnd(20),
     'Autor'.padEnd(20),
     'Descrição'.padEnd(50),
     'Tags'.padEnd(50)

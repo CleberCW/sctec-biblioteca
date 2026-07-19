@@ -69,7 +69,7 @@ function bootstrap() {
   const loanListView = new LoansListView(loanService)
   const loansView = new LoansView(loansAddView, loanReturnView, loanListView)
 
-  const reportsView = new ReportsView(bookService, loanService)
+  const reportsView = new ReportsView(bookService, loanService, authorService)
 
   const menuView = new MenuView(booksView, usersView, loansView, reportsView)
 

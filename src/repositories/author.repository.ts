@@ -5,6 +5,7 @@ import { CreateAuthorDTO } from '../dtos/CreateAuthorDTO'
 import { BaseException } from '../errors/base.exception'
 import { Author } from '../models/Author'
 import { AuthorRepository } from './domain/repository'
+import { BooksByAuthorResult } from '../dtos/BooksByAuthorResult'
 
 export class AuthorPostgresRepository implements AuthorRepository {
   async list(pageSize = 0, offset = 10): Promise<Author[]> {
@@ -93,6 +94,29 @@ export class AuthorPostgresRepository implements AuthorRepository {
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'DELETE AUTHOR: '
+      })
+    }
+  }
+
+  async booksCount(): Promise<BooksByAuthorResult[]> {
+    try {
+      const results = await pool.query<BooksByAuthorResult>(
+        `
+      SELECT
+          a.name AS author,
+          COUNT(b.id) AS total_books
+      FROM authors a
+      LEFT JOIN books b
+          ON b.author_id = a.id
+      GROUP BY a.id, a.name
+      ORDER BY total_books DESC, a.name;
+      `
+      )
+
+      return results.rows
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'COUNT BOOKS AUTHOR: '
       })
     }
   }

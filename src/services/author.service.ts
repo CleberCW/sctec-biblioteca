@@ -1,6 +1,7 @@
 import { PoolClient } from 'pg'
 
 import { Result } from '../@common/result/result'
+import { BooksByAuthorResult } from '../dtos/BooksByAuthorResult'
 import { CreateAuthorDTO } from '../dtos/CreateAuthorDTO'
 import { Author } from '../models/Author'
 import { AuthorPostgresRepository } from '../repositories/author.repository'
@@ -31,5 +32,9 @@ export class AuthorService {
       (await this.authorRepository.addAuthor({ name: name.name }, client))
 
     return authorId
+  }
+
+  async countBooksByAuthor(): Promise<BooksByAuthorResult[]> {
+    return this.authorRepository.booksCount()
   }
 }

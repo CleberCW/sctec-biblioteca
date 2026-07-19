@@ -1,27 +1,11 @@
-import { ConsoleView } from './console.view'
+import { PaginatedConsoleView } from './paginated.view'
 import { User } from '../models/User'
 import { UserService } from '../services/user.service'
 import { UserListPage } from '../types/UserListPage'
 
-export class UsersListView extends ConsoleView {
-  private pageSize = 20
-
-  private page = 1
-
-  private userListPage?: UserListPage
-
+export class UsersListView extends PaginatedConsoleView<User, UserListPage> {
   constructor(private readonly userService: UserService) {
     super()
-  }
-
-  private formatUsers(u: User): string {
-    return [
-      String(u.id).padEnd(6),
-      u.name.slice(0, 60).padEnd(60),
-      u.cpf.padEnd(20),
-      u.email.slice(0, 20).padEnd(20),
-      u.phone.slice(0, 50).padEnd(20)
-    ].join(' | ')
   }
 
   private readonly header = [
@@ -32,87 +16,51 @@ export class UsersListView extends ConsoleView {
     'Telefone'.padEnd(20)
   ].join(' | ')
 
-  private async renderPage(): Promise<void> {
-    this.display(this.header)
-    this.display('='.repeat(this.header.length))
-    this.userListPage = await this.userService.getPage(this.page, this.pageSize)
+  protected override async fetchPage(
+    page: number,
+    pageSize: number
+  ): Promise<UserListPage> {
+    return this.userService.getPage(page, pageSize)
+  }
 
-    if (this.userListPage.users.length === 0) {
-      this.display('Nenhum usuário encontrado.\n')
-    } else {
-      this.userListPage.users.forEach((u) => {
-        this.display(this.formatUsers(u))
-      })
-    }
+  protected override getItems(page: UserListPage): User[] {
+    return page.users
+  }
 
-    const hasPrev = this.userListPage.page > 1
-    const hasNext = this.userListPage.page < this.userListPage.totalPages
+  protected override getCurrentPage(page: UserListPage): number {
+    return page.page
+  }
 
-    const footer = [hasPrev ? '[A] Anterior' : '', hasNext ? '[S] Próxima' : '']
-      .filter((s) => s !== '')
+  protected override getTotalPages(page: UserListPage): number {
+    return page.totalPages
+  }
+
+  protected override formatItem(u: User): string {
+    return [
+      String(u.id).padEnd(6),
+      u.name.slice(0, 60).padEnd(60),
+      u.cpf.padEnd(20),
+      u.email.slice(0, 20).padEnd(20),
+      u.phone.slice(0, 50).padEnd(20)
+    ].join(' | ')
+  }
+
+  protected override getHeader(): string {
+    return this.header
+  }
+
+  protected override renderFooter(
+    hasPrevious: boolean,
+    hasNext: boolean
+  ): void {
+    const footer = [
+      hasPrevious ? '[A] Anterior' : '',
+      hasNext ? '[S] Próxima' : ''
+    ]
+      .filter(Boolean)
       .join(' | ')
 
-    this.display('')
-
-    this.display(footer !== '' ? footer : 'Página única')
-    this.display('')
-    this.display('[Q] Voltar')
-  }
-
-  private async handleNext(): Promise<void> {
-    if (!this.userListPage) return
-
-    const hasNext = this.userListPage.page < this.userListPage.totalPages
-
-    if (!hasNext) {
-      return
-    }
-
-    this.page++
-
-    this.userListPage = await this.userService.getPage(this.page, this.pageSize)
-
-    await this.renderPage()
-  }
-
-  private async handlePrevious(): Promise<void> {
-    if (!this.userListPage) return
-
-    const hasPrevious = this.userListPage.page > 1
-
-    if (!hasPrevious) {
-      return
-    }
-
-    this.page--
-
-    this.userListPage = await this.userService.getPage(this.page, this.pageSize)
-
-    await this.renderPage()
-  }
-
-  protected async onExit(): Promise<void> {
-    this.page = 1
-    return super.onExit()
-  }
-
-  protected async update(): Promise<void> {
-    await this.renderPage()
-
-    const option = await this.prompt('Escolha uma opção: ')
-
-    switch (option.trim().toUpperCase()) {
-      case 'S':
-        await this.handleNext()
-        break
-      case 'A':
-        await this.handlePrevious()
-        break
-      case 'Q':
-        this.exit()
-        break
-      default:
-        break
-    }
+    this.display(footer || 'Página única')
+    this.display('[C] Selecionar  [Q] Voltar')
   }
 }

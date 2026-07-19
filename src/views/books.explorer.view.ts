@@ -1,31 +1,18 @@
-import { ConsoleView } from './console.view'
+import { PaginatedConsoleView } from './paginated.view'
 import { ViewFactory } from '../factories/view.factories'
 import { BookSearchResult } from '../models/BookSearchResult'
 import { BookService } from '../services/book.service'
 import { BookListPage } from '../types/BookListPage'
 
-export class BooksListView extends ConsoleView {
-  private pageSize = 20
-
-  private page = 1
-
-  private bookListPage?: BookListPage
-
+export class BooksListView extends PaginatedConsoleView<
+  BookSearchResult,
+  BookListPage
+> {
   constructor(
     private readonly bookService: BookService,
     private readonly viewFactory: ViewFactory
   ) {
     super()
-  }
-
-  private formatBooks(b: BookSearchResult): string {
-    return [
-      String(b.id).padEnd(6),
-      b.title.slice(0, 60).padEnd(60),
-      (b.isbn ?? 'Sem ISBN').padEnd(20),
-      b.author.slice(0, 20).padEnd(20),
-      (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50)
-    ].join(' | ')
   }
 
   private readonly header = [
@@ -36,73 +23,66 @@ export class BooksListView extends ConsoleView {
     'Description'.padEnd(50)
   ].join(' | ')
 
-  private async renderPage(): Promise<void> {
-    this.display(this.header)
-    this.display('='.repeat(this.header.length))
-    this.bookListPage = await this.bookService.getPage(this.page, this.pageSize)
+  protected override async fetchPage(
+    page: number,
+    pageSize: number
+  ): Promise<BookListPage> {
+    return this.bookService.getPage(page, pageSize)
+  }
 
-    if (this.bookListPage.books.length === 0) {
-      this.display('Nenhum livro encontrado.')
-    } else {
-      this.bookListPage.books.forEach((b) => {
-        this.display(this.formatBooks(b))
-      })
-    }
+  protected override getItems(page: BookListPage): BookSearchResult[] {
+    return page.books
+  }
 
-    const hasPrev = this.bookListPage.page > 1
-    const hasNext = this.bookListPage.page < this.bookListPage.totalPages
+  protected override getCurrentPage(page: BookListPage): number {
+    return page.page
+  }
 
-    const footer = [hasPrev ? '[A] Anterior' : '', hasNext ? '[S] Próxima' : '']
-      .filter((s) => s !== '')
+  protected override getTotalPages(page: BookListPage): number {
+    return page.totalPages
+  }
+
+  protected override formatItem(book: BookSearchResult): string {
+    return [
+      String(book.id).padEnd(6),
+      book.title.slice(0, 60).padEnd(60),
+      (book.isbn ?? 'Sem ISBN').padEnd(20),
+      book.author.slice(0, 20).padEnd(20),
+      (book.description ?? 'Sem descrição').slice(0, 50).padEnd(50)
+    ].join(' | ')
+  }
+
+  protected override getHeader(): string {
+    return this.header
+  }
+
+  protected override renderFooter(
+    hasPrevious: boolean,
+    hasNext: boolean
+  ): void {
+    const footer = [
+      hasPrevious ? '[A] Anterior' : '',
+      hasNext ? '[S] Próxima' : ''
+    ]
+      .filter(Boolean)
       .join(' | ')
 
-    this.display(footer !== '' ? footer : 'Página única')
+    this.display(footer || 'Página única')
     this.display('[C] Selecionar  [Q] Voltar')
   }
 
-  private async handleNext(): Promise<void> {
-    if (!this.bookListPage) return
-
-    const hasNext = this.bookListPage.page < this.bookListPage.totalPages
-
-    if (!hasNext) {
-      return
+  protected async handleCustomOption(option: string): Promise<void> {
+    if (option === 'C') {
+      await this.selectBook()
     }
-
-    this.page++
-
-    this.bookListPage = await this.bookService.getPage(this.page, this.pageSize)
-
-    await this.renderPage()
   }
 
-  private async handlePrevious(): Promise<void> {
-    if (!this.bookListPage) return
-
-    const hasPrevious = this.bookListPage.page > 1
-
-    if (!hasPrevious) {
-      return
-    }
-
-    this.page--
-
-    this.bookListPage = await this.bookService.getPage(this.page, this.pageSize)
-
-    await this.renderPage()
-  }
-
-  protected async onExit(): Promise<void> {
-    this.page = 1
-    return super.onExit()
-  }
-
-  protected async selectBook(): Promise<void> {
+  private async selectBook(): Promise<void> {
     const input = await this.prompt(
-      'Digite o ID do livro o pressione Q para voltar: '
+      'Digite o ID do livro ou pressione Q para voltar: '
     )
 
-    if (input === 'Q' || input === 'q' || input === '') {
+    if (input.trim().toUpperCase() === 'Q' || input === '') {
       return
     }
 
@@ -121,28 +101,5 @@ export class BooksListView extends ConsoleView {
     }
 
     await this.viewFactory.createSelectBooksView(book).start()
-  }
-
-  protected async update(): Promise<void> {
-    await this.renderPage()
-
-    const option = await this.prompt('Escolha uma opção: ')
-
-    switch (option.trim().toUpperCase()) {
-      case 'S':
-        await this.handleNext()
-        break
-      case 'A':
-        await this.handlePrevious()
-        break
-      case 'C':
-        await this.selectBook()
-        break
-      case 'Q':
-        this.exit()
-        break
-      default:
-        break
-    }
   }
 }

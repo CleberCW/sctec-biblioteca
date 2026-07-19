@@ -17,27 +17,6 @@ interface BookRow {
   num_pages: string
 }
 
-const ignoredWords = [
-  'coloring',
-  'calendar',
-  'journal',
-  'workbook',
-  'study guide',
-  'trivia',
-  'cookbook',
-  'box set',
-  'collection',
-  'bundle',
-  'film comic',
-  'comic'
-]
-
-function shouldIgnore(title: string): boolean {
-  const lower = title.toLowerCase()
-
-  return ignoredWords.some((word) => lower.includes(word))
-}
-
 function parseGenres(raw: string): string[] {
   if (!raw) return []
 
@@ -58,7 +37,7 @@ async function main() {
   try {
     await client.query('BEGIN')
 
-    const csv = await readFile('./src/data/books.csv', 'utf8')
+    const csv = await readFile('./src/data/books.small.csv', 'utf8')
 
     const books = parse<BookRow>(csv, {
       columns: true,
@@ -73,15 +52,11 @@ async function main() {
     for (const row of books) {
       if (!row.book_id || !row.title || !row.author) continue
 
-      if (shouldIgnore(row.title)) continue
-
       if (insertedBooks.has(row.book_id)) continue
 
       insertedBooks.add(row.book_id)
 
-      //
-      // AUTHOR
-      //
+      //AUTHOR
       let authorId = authorCache.get(row.author)
 
       if (!authorId) {
@@ -108,14 +83,12 @@ async function main() {
         authorCache.set(row.author, authorId)
       }
 
-      //
       // BOOK
-      //
       const insertedBook = await client.query<{ id: number }>(
         `
         INSERT INTO books (
-            barcode,
-            name,
+            isbn,
+            title,
             author_id,
             description,
             publish_year,
@@ -123,7 +96,6 @@ async function main() {
             num_pages
         )
         VALUES ($1,$2,$3,$4,$5,$6,$7)
-        ON CONFLICT (barcode) DO NOTHING
         RETURNING id
         `,
         [
@@ -141,15 +113,13 @@ async function main() {
 
       const bookId = insertedBook.rows[0].id
 
-      //
-      // GENRES
-      //
+      // TAGS
       for (const genre of parseGenres(row.genres)) {
         let genreId = genreCache.get(genre)
 
         if (!genreId) {
           const existing = await client.query<{ id: number }>(
-            `SELECT id FROM genres WHERE name = $1`,
+            `SELECT id FROM tags WHERE name = $1`,
             [genre]
           )
 
@@ -158,7 +128,7 @@ async function main() {
           } else {
             const inserted = await client.query<{ id: number }>(
               `
-              INSERT INTO genres(name)
+              INSERT INTO tags(name)
               VALUES($1)
               RETURNING id
               `,
@@ -173,7 +143,7 @@ async function main() {
 
         await client.query(
           `
-          INSERT INTO book_genres(book_id, genre_id)
+          INSERT INTO book_tags(book_id, tag_id)
           VALUES ($1,$2)
           ON CONFLICT DO NOTHING
           `,

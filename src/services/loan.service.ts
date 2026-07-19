@@ -31,8 +31,8 @@ export class LoanService {
         throw new Error('Usuário não encontrado')
       }
 
-      const book = await this.bookRepository.searchByBarcode(
-        dto.bookBarcode,
+      const book = await this.bookRepository.searchById(
+        Number(dto.bookId),
         client
       )
 

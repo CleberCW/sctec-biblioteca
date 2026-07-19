@@ -54,7 +54,7 @@ export class BooksPostgresRepository implements BookRepository {
         `
       INSERT INTO books (
         barcode,
-        name,
+        title,
         author_id,
         description,
         publish_year,
@@ -67,8 +67,8 @@ export class BooksPostgresRepository implements BookRepository {
       );
       `,
         [
-          book.barcode,
-          book.name,
+          book.isbn,
+          book.title,
           book.authorId,
           book.description,
           book.publishYear,
@@ -99,7 +99,7 @@ export class BooksPostgresRepository implements BookRepository {
     }
   }
 
-  async barcodeExists(barcode: string): Promise<boolean> {
+  async isbnExists(barcode: string): Promise<boolean> {
     try {
       const result = await pool.query<{ exists: boolean }>(
         `
@@ -120,8 +120,37 @@ export class BooksPostgresRepository implements BookRepository {
     }
   }
 
-  async searchByBarcode(
-    barcode: string,
+  async searchByIsbn(
+    isbn: string,
+    client?: PoolClient
+  ): Promise<BookSearchResult[]> {
+    try {
+      const db = client ?? pool
+      const result = await db.query<BookSearchResult>(
+        `SELECT
+        b.id,
+        b.title,
+        b.isbn,
+        a.name AS author,
+        b.description,
+        b.status
+        FROM books b
+        JOIN authors a
+            ON a.id = b.author_id
+        WHERE b.isbn = $1;`,
+        [isbn]
+      )
+
+      return result.rows
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'SEARCH BOOK BY ISBN: '
+      })
+    }
+  }
+
+  async searchById(
+    id: number,
     client?: PoolClient
   ): Promise<BookSearchResult | null> {
     try {
@@ -129,22 +158,22 @@ export class BooksPostgresRepository implements BookRepository {
       const result = await db.query<BookSearchResult>(
         `SELECT
         b.id,
-        b.name,
-        b.barcode,
+        b.title,
+        b.isbn,
         a.name AS author,
         b.description,
         b.status
         FROM books b
         JOIN authors a
             ON a.id = b.author_id
-        WHERE b.barcode = $1;`,
-        [barcode]
+        WHERE b.id = $1;`,
+        [id]
       )
 
       return result.rows[0] ?? null
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
-        messagePrefix: 'SEARCH BOOK BY BARCODE: '
+        messagePrefix: 'SEARCH BOOK BY ID: '
       })
     }
   }
@@ -156,10 +185,10 @@ export class BooksPostgresRepository implements BookRepository {
       SELECT
         b.*,
         a.name AS author,
-        similarity(b.name, $1) AS score
+        similarity(b.title, $1) AS score
       FROM books b
       JOIN authors a ON a.id = b.author_id
-      WHERE similarity(b.name, $1) > 0.5
+      WHERE similarity(b.title, $1) > 0.5
       ORDER BY score DESC;
       `,
         [title]

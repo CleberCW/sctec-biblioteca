@@ -16,7 +16,8 @@ export class BooksAddView extends ConsoleView {
     this.display('\n=== Cadastrar Livro ===\n')
 
     const book: CreateBookInputDTO = {
-      name: '',
+      isbn: '',
+      title: '',
       author: '',
       description: undefined,
       publishYear: undefined,
@@ -25,7 +26,8 @@ export class BooksAddView extends ConsoleView {
       ...initial
     }
 
-    book.name = await this.askName(book.name)
+    book.isbn = await this.askIsbn(book.isbn)
+    book.title = await this.askTitle(book.title)
     book.author = await this.askAuthor(book.author)
     book.description = await this.askDescription(book.description)
     book.publishYear = await this.askPublishYear(book.publishYear)
@@ -35,19 +37,29 @@ export class BooksAddView extends ConsoleView {
     await this.confirmBook(book)
   }
 
-  private async askName(current: string): Promise<string> {
+  private async askIsbn(current?: string): Promise<string | undefined> {
+    const input = (
+      await this.prompt(
+        `Descrição${current ? ` [${current}]` : ''} (opcional): `
+      )
+    ).trim()
+
+    return input === '' ? current : input
+  }
+
+  private async askTitle(current: string): Promise<string> {
     for (;;) {
       const input = (
-        await this.prompt(`Nome${current ? ` [${current}]` : ''}: `)
+        await this.prompt(`Título${current ? ` [${current}]` : ''}: `)
       ).trim()
 
       const value = input === '' ? current : input
 
-      if (BookValidator.validateName(value)) {
+      if (BookValidator.validateTitle(value)) {
         return value
       }
 
-      this.display('Nome inválido.\n')
+      this.display('Título inválido.\n')
     }
   }
 
@@ -145,7 +157,7 @@ export class BooksAddView extends ConsoleView {
     this.display(`
         =============================================================
 
-        Nome: ${book.name},
+        Nome: ${book.title},
         Autor: ${book.author},
         Descrição: ${book.description ?? 'N/A'},
         Ano de publicação: ${String(book.publishYear ?? 'N/A')},
@@ -215,7 +227,7 @@ export class BooksAddView extends ConsoleView {
     switch (option.trim().toUpperCase()) {
       case 'C': {
         const bookToAdd: CreateBookInputDTO = {
-          name: metadata.title,
+          title: metadata.title,
           author: metadata.authors[0] ?? 'Desconhecido',
           description: metadata.synopsis ?? undefined,
           publishYear: metadata.year ?? undefined,
@@ -236,7 +248,7 @@ export class BooksAddView extends ConsoleView {
 
       case 'E':
         await this.registerManually({
-          name: metadata.title,
+          title: metadata.title,
           author: metadata.authors[0] ?? 'Desconhecido',
           description: metadata.synopsis ?? undefined,
           publishYear: metadata.year ?? undefined,

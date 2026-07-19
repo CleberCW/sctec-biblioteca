@@ -17,8 +17,8 @@ export class BooksListView extends ConsoleView {
   private formatBooks(b: BookSearchResult): string {
     return [
       String(b.id).padEnd(6),
-      b.name.slice(0, 60).padEnd(60),
-      b.barcode.padEnd(20),
+      b.title.slice(0, 60).padEnd(60),
+      (b.isbn ?? 'Sem ISBN').padEnd(20),
       b.author.slice(0, 20).padEnd(20),
       (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50)
     ].join(' | ')

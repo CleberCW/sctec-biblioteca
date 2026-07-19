@@ -117,6 +117,17 @@ export abstract class ConsoleView {
     this.aborted = false
   }
 
+  protected async promptOrExit(message: string): Promise<string | null> {
+    const input = await this.prompt(message)
+
+    if (input === ConsoleView.ABORT_SENTINEL) {
+      this.exit()
+      return null
+    }
+
+    return input
+  }
+
   async start(): Promise<void> {
     this.resetState()
 

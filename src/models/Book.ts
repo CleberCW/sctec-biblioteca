@@ -3,8 +3,8 @@ import { BookStatus } from '../enums/BookStatus'
 export interface Book {
   id: number
   createdAt: Date
-  barcode: string
-  name: string
+  isbn: string | null
+  title: string
   authorId: number
   description: string | null
   publishYear: number | null

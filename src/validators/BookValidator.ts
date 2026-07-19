@@ -1,5 +1,5 @@
 export class BookValidator {
-  static validateName(name: string): boolean {
+  static validateTitle(name: string): boolean {
     return name.trim().length >= 3
   }
 

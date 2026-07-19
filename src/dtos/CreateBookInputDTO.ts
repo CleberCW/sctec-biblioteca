@@ -1,5 +1,6 @@
 export interface CreateBookInputDTO {
-  name: string
+  isbn?: string
+  title: string
   author: string
   description?: string
   publishYear?: number

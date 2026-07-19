@@ -1,8 +1,8 @@
 export interface CreateLoanInputDTO {
-  bookBarcode: string
+  bookId: string
   cpf: string
   loanDate: Date
   returnDate: Date
-  bookName: string
+  bookTitle: string
   userName: string
 }

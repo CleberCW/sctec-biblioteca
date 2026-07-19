@@ -1,7 +1,7 @@
 export interface CreateBookRepositoryDTO {
-  name: string
+  title: string
   authorId: number
-  barcode: string
+  isbn?: string
   description?: string
   publishYear?: number
   edition?: number

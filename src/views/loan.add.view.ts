@@ -30,9 +30,9 @@ export class LoanAddView extends ConsoleView {
     for (;;) {
       this.display('\n=== Realizar Empréstimo ===\n')
 
-      const inputBarcode = initial?.bookBarcode ?? (await this.askBookBarcode())
+      const inputId = initial?.bookId ?? (await this.askId())
 
-      const book = await this.bookService.searchByBarcode(inputBarcode)
+      const book = await this.bookService.searchById(Number(inputId))
 
       if (!book) {
         this.display('Livro não encontrado.')
@@ -64,11 +64,11 @@ export class LoanAddView extends ConsoleView {
       returnDate.setDate(returnDate.getDate() + 7)
 
       const loan: CreateLoanInputDTO = {
-        bookBarcode: inputBarcode,
+        bookId: inputId,
         cpf: inputCpf,
         loanDate: loanDate,
         returnDate: returnDate,
-        bookName: book.name,
+        bookTitle: book.title,
         userName: user.name
       }
 
@@ -82,10 +82,10 @@ export class LoanAddView extends ConsoleView {
     })
   }
 
-  private async askBookBarcode(current?: string): Promise<string> {
+  private async askId(current?: string): Promise<string> {
     for (;;) {
       const input = (
-        await this.prompt(`Book barcode${current ? ` [${current}]` : ''}: `)
+        await this.prompt(`Id do livro${current ? ` [${current}]` : ''}: `)
       ).trim()
 
       return input === '' ? (current ?? '') : input
@@ -104,7 +104,7 @@ export class LoanAddView extends ConsoleView {
     this.display(`
             =============================================================
     
-            Livro: ${loan.bookName},
+            Livro: ${loan.bookTitle},
             Solicitante: ${loan.userName},
             Data de empréstimo: ${String(loan.loanDate)}
             Data de retorno: ${String(loan.returnDate)},

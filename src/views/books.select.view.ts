@@ -12,8 +12,8 @@ export class SelectBooksView extends ConsoleView {
 
   protected async renderMenu(): Promise<void> {
     this.display('\n=== Livro ===')
-    this.display(`Título: ${this.book.name}`)
-    this.display(`Código: ${this.book.barcode}`)
+    this.display(`Título: ${this.book.title}`)
+    this.display(`ID: ${String(this.book.id)}`)
     this.display(`Descrição: ${this.book.description ?? 'Sem descrição'}`)
 
     this.display('')
@@ -48,7 +48,7 @@ export class SelectBooksView extends ConsoleView {
 
   private async loanBook() {
     await this.viewFactory.createLoanAddView().start({
-      bookBarcode: this.book.barcode
+      bookId: String(this.book.id)
     })
   }
 

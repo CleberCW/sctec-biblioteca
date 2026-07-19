@@ -15,7 +15,7 @@ export class BooksSearchView extends ConsoleView {
 
   private async renderMenu(): Promise<void> {
     this.display('\n=== Buscar Livro ===\n')
-    this.display('[1] Buscar por código de barras')
+    this.display('[1] Buscar por ISBN')
     this.display('[2] Buscar por título')
     this.display('[3] Buscar por autor')
     this.display('[4] Buscar por palavra-chave')
@@ -27,9 +27,9 @@ export class BooksSearchView extends ConsoleView {
 
     switch (option) {
       case '1': {
-        const barcode = await this.prompt('Digite o código de barras: ')
-        const result = await this.bookService.searchByBarcode(barcode)
-        await this.renderResults(result ? [result] : [])
+        const isbn = await this.prompt('Digite o ISBN: ')
+        const results = await this.bookService.searchByIsbn(isbn)
+        await this.renderResults(results)
         break
       }
 
@@ -60,15 +60,13 @@ export class BooksSearchView extends ConsoleView {
       default:
         this.display('Opção inválida.')
     }
-
-    await this.prompt('Pressione ENTER para continuar:')
   }
 
   private formatBooks(b: BookSearchResult): string {
     return [
       String(b.id).padEnd(6),
-      b.name.slice(0, 60).padEnd(60),
-      b.barcode.padEnd(20),
+      b.title.slice(0, 60).padEnd(60),
+      (b.isbn ?? 'Sem ISBN').padEnd(20),
       b.author.slice(0, 20).padEnd(20),
       (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50)
     ].join(' | ')
@@ -99,20 +97,16 @@ export class BooksSearchView extends ConsoleView {
       return
     }
 
-    console.dir(results, { depth: null })
-
     results.forEach((book) => {
       this.display(this.formatBooks(book))
     })
 
     for (;;) {
-      const input = (
-        await this.prompt('\nDigite o ID do livro ou Q para voltar: ')
+      const input = await this.promptOrExit(
+        '\nDigite o ID do livro ou Q para voltar: '
       )
-        .trim()
-        .toUpperCase()
 
-      if (input === 'Q') {
+      if (input === 'Q' || input === 'q' || input === null || input === '') {
         return
       }
 

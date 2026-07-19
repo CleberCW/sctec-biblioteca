@@ -1,5 +1,3 @@
-import { randomInt } from 'node:crypto'
-
 import { PoolClient } from 'pg'
 
 import { AuthorService } from './author.service'
@@ -21,31 +19,14 @@ export class BookService {
     return this.bookRepository.list()
   }
 
-  private generateBarcode(length = 12): string {
-    let barcode = ''
-
-    for (let i = 0; i < length; i++) {
-      barcode += String(randomInt(10))
-    }
-
-    return barcode
-  }
-
   async add(book: CreateBookInputDTO): Promise<Result<void>> {
     const authorId = await this.authorService.findOrCreate({
       name: book.author
     })
 
-    let barcode: string
-
-    do {
-      barcode = this.generateBarcode()
-    } while (await this.bookRepository.barcodeExists(barcode))
-
     const bookToAdd: CreateBookRepositoryDTO = {
       ...book,
-      authorId,
-      barcode
+      authorId
     }
 
     await this.bookRepository.addBook(bookToAdd)
@@ -85,11 +66,15 @@ export class BookService {
     return isbnProvider.findByIsbn(isbn)
   }
 
-  async searchByBarcode(
-    barcode: string,
+  async searchById(id: number): Promise<BookSearchResult | null> {
+    return this.bookRepository.searchById(id)
+  }
+
+  async searchByIsbn(
+    isbn: string,
     client?: PoolClient
-  ): Promise<BookSearchResult | null> {
-    return this.bookRepository.searchByBarcode(barcode, client)
+  ): Promise<BookSearchResult[]> {
+    return this.bookRepository.searchByIsbn(isbn, client)
   }
 
   async searchByTitle(title: string): Promise<BookSearchResult[]> {

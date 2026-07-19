@@ -30,7 +30,6 @@ export class UserSearchView extends ConsoleView {
         const cpf = await this.prompt('Digite o CPF: ')
         const result = await this.userService.searchByCpf(cpf)
         await this.renderResults(result ? [result] : [])
-        await this.prompt('Pressione ENTER para continuar:')
         break
       }
 
@@ -38,14 +37,12 @@ export class UserSearchView extends ConsoleView {
         const name = await this.prompt('Digite o nome: ')
         const results = await this.userService.searchByName(name)
         await this.renderResults(results)
-        await this.prompt('Pressione ENTER para continuar:')
         break
       }
       case '3': {
         const email = await this.prompt('Digite o email: ')
         const results = await this.userService.searchByEmail(email)
         await this.renderResults(results)
-        await this.prompt('Pressione ENTER para continuar:')
         break
       }
 
@@ -53,7 +50,6 @@ export class UserSearchView extends ConsoleView {
         const phone = await this.prompt('Digite o telefone: ')
         const results = await this.userService.searchByPhone(phone)
         await this.renderResults(results)
-        await this.prompt('Pressione ENTER para continuar:')
         break
       }
 

@@ -4,6 +4,7 @@ import { pool } from '../config/db'
 import { BaseException } from '../errors/base.exception'
 import { BookRepository } from './domain/repository'
 import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
+import { EditBookInputDTO } from '../dtos/EditBookInputDTO'
 import { BookStatus } from '../enums/BookStatus'
 import { BookSearchResult } from '../models/BookSearchResult'
 
@@ -53,7 +54,7 @@ export class BooksPostgresRepository implements BookRepository {
       await pool.query(
         `
       INSERT INTO books (
-        barcode,
+        isbn,
         title,
         author_id,
         description,
@@ -128,12 +129,8 @@ export class BooksPostgresRepository implements BookRepository {
       const db = client ?? pool
       const result = await db.query<BookSearchResult>(
         `SELECT
-        b.id,
-        b.title,
-        b.isbn,
+        b.*
         a.name AS author,
-        b.description,
-        b.status
         FROM books b
         JOIN authors a
             ON a.id = b.author_id
@@ -156,17 +153,14 @@ export class BooksPostgresRepository implements BookRepository {
     try {
       const db = client ?? pool
       const result = await db.query<BookSearchResult>(
-        `SELECT
-        b.id,
-        b.title,
-        b.isbn,
-        a.name AS author,
-        b.description,
-        b.status
-        FROM books b
-        JOIN authors a
-            ON a.id = b.author_id
-        WHERE b.id = $1;`,
+        `
+      SELECT
+        b.*,
+        a.name AS author
+      FROM books b
+      JOIN authors a
+          ON a.id = b.author_id
+      WHERE b.id = $1;`,
         [id]
       )
 
@@ -188,7 +182,9 @@ export class BooksPostgresRepository implements BookRepository {
         similarity(b.title, $1) AS score
       FROM books b
       JOIN authors a ON a.id = b.author_id
-      WHERE similarity(b.title, $1) > 0.5
+      WHERE
+        b.title ILIKE '%' || $1 || '%'
+        OR b.title % $1
       ORDER BY score DESC;
       `,
         [title]
@@ -207,13 +203,16 @@ export class BooksPostgresRepository implements BookRepository {
       const result = await pool.query<BookSearchResult>(
         `
       SELECT
-        b.*,
-        a.name AS author,
-        similarity(a.name, $1) AS score
+          b.*,
+          a.name AS author,
+          similarity(a.name, $1) AS score
       FROM books b
       JOIN authors a ON a.id = b.author_id
-      WHERE similarity(a.name, $1) > 0.5
-      ORDER BY score DESC;
+      WHERE
+          a.name ILIKE '%' || $1 || '%'
+          OR a.name % $1
+      ORDER BY
+          similarity(a.name, $1) DESC;
       `,
         [author]
       )
@@ -230,16 +229,20 @@ export class BooksPostgresRepository implements BookRepository {
     try {
       const result = await pool.query<BookSearchResult>(
         `
-      SELECT *,
-       ts_rank(
-         to_tsvector('simple', description),
-         plainto_tsquery('simple', $1)
-       ) AS rank
-      FROM books
-      WHERE to_tsvector('simple', description)
-            @@ plainto_tsquery('simple', $1)
-      ORDER BY rank DESC;
-      `,
+      SELECT
+          b.*,
+          a.name AS author,
+          t.name AS tag
+      FROM books b
+      JOIN authors a ON a.id = b.author_id
+      JOIN book_tags bt
+          ON bt.book_id = b.id
+      JOIN tags t
+          ON t.id = bt.tag_id
+      WHERE
+          t.name ILIKE '%' || $1 || '%'
+      ORDER BY
+          b.id ASC;`,
         [keyword]
       )
 
@@ -263,6 +266,32 @@ export class BooksPostgresRepository implements BookRepository {
     WHERE id = $1
     `,
       [id, status]
+    )
+  }
+
+  async update(id: number, dto: EditBookInputDTO): Promise<void> {
+    await pool.query(
+      `
+    UPDATE books
+    SET
+        isbn = $2,
+        title = $3,
+        description = $4,
+        publish_year = $5,
+        edition = $6,
+        num_pages = $7
+        last_edited_at = NOW()
+    WHERE id = $1;
+    `,
+      [
+        id,
+        dto.isbn,
+        dto.title,
+        dto.description,
+        dto.publish_year,
+        dto.edition,
+        dto.num_pages
+      ]
     )
   }
 }

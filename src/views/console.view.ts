@@ -43,7 +43,7 @@ export abstract class ConsoleView {
       ) {
         this.aborted = true
         this.exit()
-        return ConsoleView.ABORT_SENTINEL
+        throw new FatalViewException('Abortado')
       }
 
       throw error
@@ -115,17 +115,6 @@ export abstract class ConsoleView {
   private resetState(): void {
     this.isInView = true
     this.aborted = false
-  }
-
-  protected async promptOrExit(message: string): Promise<string | null> {
-    const input = await this.prompt(message)
-
-    if (input === ConsoleView.ABORT_SENTINEL) {
-      this.exit()
-      return null
-    }
-
-    return input
   }
 
   async start(): Promise<void> {

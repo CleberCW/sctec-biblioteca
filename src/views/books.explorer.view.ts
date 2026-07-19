@@ -1,4 +1,5 @@
 import { ConsoleView } from './console.view'
+import { ViewFactory } from '../factories/view.factories'
 import { BookSearchResult } from '../models/BookSearchResult'
 import { BookService } from '../services/book.service'
 import { BookListPage } from '../types/BookListPage'
@@ -10,7 +11,10 @@ export class BooksListView extends ConsoleView {
 
   private bookListPage?: BookListPage
 
-  constructor(private readonly bookService: BookService) {
+  constructor(
+    private readonly bookService: BookService,
+    private readonly viewFactory: ViewFactory
+  ) {
     super()
   }
 
@@ -45,8 +49,6 @@ export class BooksListView extends ConsoleView {
       })
     }
 
-    this.display(this.header)
-
     const hasPrev = this.bookListPage.page > 1
     const hasNext = this.bookListPage.page < this.bookListPage.totalPages
 
@@ -64,8 +66,6 @@ export class BooksListView extends ConsoleView {
     const hasNext = this.bookListPage.page < this.bookListPage.totalPages
 
     if (!hasNext) {
-      this.display('Não há próxima página.')
-      await this.prompt('Pressione ENTER para continuar:')
       return
     }
 
@@ -82,8 +82,6 @@ export class BooksListView extends ConsoleView {
     const hasPrevious = this.bookListPage.page > 1
 
     if (!hasPrevious) {
-      this.display('Não há página amterior.')
-      await this.prompt('Pressione ENTER para continuar:')
       return
     }
 
@@ -99,6 +97,32 @@ export class BooksListView extends ConsoleView {
     return super.onExit()
   }
 
+  protected async selectBook(): Promise<void> {
+    const input = await this.prompt(
+      'Digite o ID do livro o pressione Q para voltar: '
+    )
+
+    if (input === 'Q' || input === 'q' || input === '') {
+      return
+    }
+
+    const id = Number(input)
+
+    if (Number.isNaN(id)) {
+      this.display('ID inválido.')
+      return
+    }
+
+    const book = await this.bookService.searchById(id)
+
+    if (!book) {
+      this.display('Livro não encontrado.')
+      return
+    }
+
+    await this.viewFactory.createSelectBooksView(book).start()
+  }
+
   protected async update(): Promise<void> {
     await this.renderPage()
 
@@ -112,13 +136,13 @@ export class BooksListView extends ConsoleView {
         await this.handlePrevious()
         break
       case 'C':
+        await this.selectBook()
         break
       case 'Q':
         this.exit()
         break
       default:
-        this.display('Opção inválida.')
-        await this.prompt('Pressione ENTER para continuar:')
+        break
     }
   }
 }

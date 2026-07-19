@@ -48,9 +48,9 @@ export class UserPostgresRepository implements UserRepository {
     try {
       const result = await pool.query<User>(
         `
-      SELECT *
-      FROM users
-      WHERE name = $1;
+      SELECT u.*
+      FROM users u
+      WHERE u.name ILIKE '%' || $1 || '%';
       `,
         [name]
       )

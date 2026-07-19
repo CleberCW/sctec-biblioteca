@@ -27,53 +27,58 @@ export class LoanAddView extends ConsoleView {
   private async renderPage(
     initial?: Partial<CreateLoanInputDTO>
   ): Promise<void> {
-    for (;;) {
-      this.display('\n=== Realizar Empréstimo ===\n')
+    this.display('\n=== Realizar Empréstimo ===\n')
 
-      const inputId = initial?.bookId ?? (await this.askId())
+    const inputId = initial?.bookId ?? (await this.askId())
 
-      const book = await this.bookService.searchById(Number(inputId))
-
-      if (!book) {
-        this.display('Livro não encontrado.')
-        await this.prompt('Pressione ENTER para continuar...')
-        this.exit()
-        return
-      }
-
-      if (book.status !== BookStatus.AVAILABLE) {
-        this.display('Livro não disponível.')
-        await this.prompt('Pressione ENTER para continuar...')
-        this.exit()
-        return
-      }
-
-      const inputCpf = initial?.cpf ?? (await this.askClientCpf())
-      const user = await this.userService.searchByCpf(inputCpf)
-
-      if (!user) {
-        this.display('Usuário não encontrado.')
-        await this.prompt('Pressione ENTER para continuar...')
-        this.exit()
-        return
-      }
-
-      const loanDate = new Date()
-
-      const returnDate = new Date(loanDate)
-      returnDate.setDate(returnDate.getDate() + 7)
-
-      const loan: CreateLoanInputDTO = {
-        bookId: inputId,
-        cpf: inputCpf,
-        loanDate: loanDate,
-        returnDate: returnDate,
-        bookTitle: book.title,
-        userName: user.name
-      }
-
-      await this.confirmLoan(loan)
+    if (isNaN(Number(inputId))) {
+      this.display('ID inválido.')
+      await this.prompt('Pressione ENTER para continuar...')
+      this.exit()
+      return
     }
+
+    const book = await this.bookService.searchById(Number(inputId))
+
+    if (!book) {
+      this.display('Livro não encontrado.')
+      await this.prompt('Pressione ENTER para continuar...')
+      this.exit()
+      return
+    }
+
+    if (book.status !== BookStatus.AVAILABLE) {
+      this.display('Livro não disponível.')
+      await this.prompt('Pressione ENTER para continuar...')
+      this.exit()
+      return
+    }
+
+    const inputCpf = initial?.cpf ?? (await this.askClientCpf())
+    const user = await this.userService.searchByCpf(inputCpf)
+
+    if (!user) {
+      this.display('Usuário não encontrado.')
+      await this.prompt('Pressione ENTER para continuar...')
+      this.exit()
+      return
+    }
+
+    const loanDate = new Date()
+
+    const returnDate = new Date(loanDate)
+    returnDate.setDate(returnDate.getDate() + 7)
+
+    const loan: CreateLoanInputDTO = {
+      bookId: inputId,
+      cpf: inputCpf,
+      loanDate: loanDate,
+      returnDate: returnDate,
+      bookTitle: book.title,
+      userName: user.name
+    }
+
+    await this.confirmLoan(loan)
   }
 
   catch(err: unknown) {
@@ -122,14 +127,14 @@ export class LoanAddView extends ConsoleView {
         await this.loanService.addLoan(loan)
         this.display('Empréstimo cadastrado com sucesso!')
         await this.prompt('Pressione ENTER para continuar:')
-        this.exit()
         break
       case 'D':
         this.display('Operação cancelada')
         await this.prompt('Pressione ENTER para continuar:')
-        this.exit()
         break
     }
+
+    this.exit()
   }
 
   protected async update(): Promise<void> {

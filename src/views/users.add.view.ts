@@ -31,7 +31,7 @@ export class UserAddView extends ConsoleView {
   private async askName(current: string): Promise<string> {
     for (;;) {
       const input = (
-        await this.prompt(`Nome${current ? ` [${current}]` : ''}: `)
+        await this.prompt(`Nome completo${current ? ` [${current}]` : ''}: `)
       ).trim()
 
       const value = input === '' ? current : input

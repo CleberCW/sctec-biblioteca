@@ -36,22 +36,23 @@ function bootstrap() {
   const bookRepository = new BooksPostgresRepository()
   const loanRepository = new LoanPostgresRepository()
   const userRepository = new UserPostgresRepository()
-
-  const bookService = new BookService(bookRepository, authorService)
-  const booksListView = new BooksListView(bookService)
-  const booksAddView = new BooksAddView(bookService)
   const userService = new UserService(userRepository)
   const loanService = new LoanService(
     loanRepository,
     userRepository,
     bookRepository
   )
+  const bookService = new BookService(bookRepository, authorService)
 
   const viewFactory = new ViewFactory(bookService, userService, loanService)
+
+  const booksListView = new BooksListView(bookService, viewFactory)
+  const booksAddView = new BooksAddView(bookService)
+
   const booksSearchView = new BooksSearchView(bookService, viewFactory)
   const booksView = new BooksView(booksListView, booksAddView, booksSearchView)
 
-  const usersListView = new UsersListView()
+  const usersListView = new UsersListView(userService)
   const usersSearchView = new UserSearchView(userService, viewFactory)
   const usersAddView = new UserAddView(userService)
   const usersView = new UsersView(usersListView, usersSearchView, usersAddView)

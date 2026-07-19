@@ -27,6 +27,7 @@ export class SelectUserView extends ConsoleView {
 
     switch (option) {
       case '1':
+        await this.loanUser()
         break
 
       case '2':
@@ -46,8 +47,10 @@ export class SelectUserView extends ConsoleView {
     }
   }
 
-  private loanUser() {
-    this.exit()
+  private async loanUser() {
+    await this.viewFactory.createLoanAddView().start({
+      cpf: this.user.cpf
+    })
   }
 
   private editUser() {

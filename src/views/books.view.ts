@@ -36,8 +36,7 @@ export class BooksView extends ConsoleView {
         this.exit()
         break
       default:
-        this.display('Opção inválida.')
-        await this.prompt('Pressione ENTER para continuar:')
+        break
     }
   }
 }

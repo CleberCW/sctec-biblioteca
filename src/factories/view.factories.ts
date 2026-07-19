@@ -1,8 +1,9 @@
-import { Book } from '../models/Book'
+import { BookSearchResult } from '../models/BookSearchResult'
 import { User } from '../models/User'
 import { BookService } from '../services/book.service'
 import { LoanService } from '../services/loan.service'
 import { UserService } from '../services/user.service'
+import { BookEditView } from '../views/book.edit.view'
 import { BooksSearchView } from '../views/books.search.view'
 import { SelectBooksView } from '../views/books.select.view'
 import { LoanAddView } from '../views/loan.add.view'
@@ -19,7 +20,7 @@ export class ViewFactory {
     return new LoanAddView(this.loanService, this.bookService, this.userService)
   }
 
-  createSelectBooksView(book: Book): SelectBooksView {
+  createSelectBooksView(book: BookSearchResult): SelectBooksView {
     return new SelectBooksView(book, this)
   }
 
@@ -29,5 +30,9 @@ export class ViewFactory {
 
   createSelectUsersView(user: User): SelectUserView {
     return new SelectUserView(user, this)
+  }
+
+  createEditBookView(book: BookSearchResult): BookEditView {
+    return new BookEditView(book, this.bookService)
   }
 }

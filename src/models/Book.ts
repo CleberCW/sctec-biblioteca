@@ -2,13 +2,13 @@ import { BookStatus } from '../enums/BookStatus'
 
 export interface Book {
   id: number
-  createdAt: Date
+  created_at: Date
   isbn: string | null
   title: string
-  authorId: number
+  author_id: number
   description: string | null
-  publishYear: number | null
+  publish_year: number | null
   edition: number | null
-  numPages: number | null
+  num_pages: number | null
   status: BookStatus
 }

@@ -6,6 +6,7 @@ import { NativeHttpService } from '../@common/http/impl/native-http.service'
 import { Result } from '../@common/result/result'
 import { CreateBookInputDTO } from '../dtos/CreateBookInputDTO'
 import { CreateBookRepositoryDTO } from '../dtos/CreateBookRepository'
+import { EditBookInputDTO } from '../dtos/EditBookInputDTO'
 import { BookSearchResult } from '../models/BookSearchResult'
 import { BooksPostgresRepository } from '../repositories/books.repository'
 
@@ -87,5 +88,20 @@ export class BookService {
 
   async searchByKeyword(keyword: string): Promise<BookSearchResult[]> {
     return this.bookRepository.searchByKeyword(keyword)
+  }
+
+  async editBook(
+    id: number,
+    info: EditBookInputDTO
+  ): Promise<Result<void, 'not-found'>> {
+    const current = await this.bookRepository.searchById(id)
+
+    if (!current) {
+      return Result.fail('not-found')
+    }
+
+    await this.bookRepository.update(id, info)
+
+    return Result.void()
   }
 }

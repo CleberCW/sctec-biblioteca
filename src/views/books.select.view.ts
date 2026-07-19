@@ -1,10 +1,10 @@
 import { ConsoleView } from './console.view'
 import { ViewFactory } from '../factories/view.factories'
-import { Book } from '../models/Book'
+import { BookSearchResult } from '../models/BookSearchResult'
 
 export class SelectBooksView extends ConsoleView {
   constructor(
-    private readonly book: Book,
+    private readonly book: BookSearchResult,
     private readonly viewFactory: ViewFactory
   ) {
     super()
@@ -14,7 +14,9 @@ export class SelectBooksView extends ConsoleView {
     this.display('\n=== Livro ===')
     this.display(`Título: ${this.book.title}`)
     this.display(`ID: ${String(this.book.id)}`)
-    this.display(`Descrição: ${this.book.description ?? 'Sem descrição'}`)
+    this.display(
+      `Descrição: ${(this.book.description ?? 'Sem descrição').slice(0, 100)}...`
+    )
 
     this.display('')
     this.display('[1] Emprestar')
@@ -30,7 +32,7 @@ export class SelectBooksView extends ConsoleView {
         break
 
       case '2':
-        this.editBook()
+        await this.editBook()
         break
 
       case '3':
@@ -52,8 +54,8 @@ export class SelectBooksView extends ConsoleView {
     })
   }
 
-  private editBook() {
-    this.exit()
+  private async editBook() {
+    await this.viewFactory.createEditBookView(this.book).start()
   }
 
   private removeBook() {

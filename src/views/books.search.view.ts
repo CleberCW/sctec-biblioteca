@@ -102,11 +102,11 @@ export class BooksSearchView extends ConsoleView {
     })
 
     for (;;) {
-      const input = await this.promptOrExit(
+      const input = await this.prompt(
         '\nDigite o ID do livro ou Q para voltar: '
       )
 
-      if (input === 'Q' || input === 'q' || input === null || input === '') {
+      if (input === 'Q' || input === 'q' || input === '') {
         return
       }
 

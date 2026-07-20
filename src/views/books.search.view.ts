@@ -15,10 +15,15 @@ export class BooksSearchView extends ConsoleView {
   }
 
   private async executeSearch(
-    action: () => Promise<BookSearchResult[]>
+    action: () => Promise<BookSearchResult[] | null>
   ): Promise<void> {
     try {
       const results = await action()
+      if (!results) {
+        this.display('Input inválido')
+        await this.prompt('Pressione ENTER para continuar:')
+        return
+      }
       await this.renderResults(results)
     } catch (err) {
       if (err instanceof BaseException) {

@@ -14,24 +14,47 @@ export class AuthorService {
   }
 
   async add(author: CreateAuthorDTO): Promise<Result<number>> {
-    const authorId =
-      (await this.authorRepository.findByName(author.name))?.id ??
-      (await this.authorRepository.addAuthor({ name: author.name }))
+    const existingAuthor = await this.authorRepository.findByName(author.name)
 
-    await this.authorRepository.addAuthor(author)
+    if (existingAuthor) {
+      return Result.ok(existingAuthor.id)
+    }
 
-    return Result.ok(authorId)
+    const newAuthorId = await this.authorRepository.addAuthor(author)
+    return Result.ok(newAuthorId)
   }
 
   async findOrCreate(
-    name: CreateAuthorDTO,
+    authorData: CreateAuthorDTO,
     client?: PoolClient
   ): Promise<number> {
-    const authorId =
-      (await this.authorRepository.findByName(name.name, client))?.id ??
-      (await this.authorRepository.addAuthor({ name: name.name }, client))
+    try {
+      const existingAuthor = await this.authorRepository.findByName(
+        authorData.name,
+        client
+      )
 
-    return authorId
+      if (existingAuthor) {
+        return existingAuthor.id
+      }
+
+      return await this.authorRepository.addAuthor(
+        { name: authorData.name },
+        client
+      )
+    } catch (err) {
+      // Se falhar devido a uma constraint UNIQUE no banco (autor já inserido por outra thread/conexão)
+      const fallbackAuthor = await this.authorRepository.findByName(
+        authorData.name,
+        client
+      )
+
+      if (fallbackAuthor) {
+        return fallbackAuthor.id
+      }
+
+      throw err // Se for outro erro qualquer, repassa a exceção
+    }
   }
 
   async countBooksByAuthor(): Promise<BooksByAuthorResult[]> {

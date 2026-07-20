@@ -22,18 +22,12 @@ export class LoanService {
 
   async getPage(page: number, pageSize: number) {
     const offset = (page - 1) * pageSize
-
     const books = await this.loanRepository.list({
       pageSize: pageSize,
       offset: offset
     })
     const total = await this.loanRepository.count()
-
-    return {
-      books,
-      totalPages: Math.ceil(total / pageSize),
-      page
-    }
+    return { books, totalPages: Math.ceil(total / pageSize), page }
   }
 
   async addLoan(dto: CreateLoanInputDTO): Promise<number> {
@@ -43,7 +37,6 @@ export class LoanService {
       await client.query('BEGIN')
 
       const user = await this.userRepository.searchByCpf(dto.cpf, client)
-
       if (!user) {
         throw new Error('Usuário não encontrado')
       }
@@ -52,7 +45,6 @@ export class LoanService {
         Number(dto.bookId),
         client
       )
-
       if (!book) {
         throw new Error('Livro não encontrado')
       }
@@ -74,12 +66,16 @@ export class LoanService {
       await this.bookRepository.updateStatus(book.id, BookStatus.LOANED, client)
 
       await client.query('COMMIT')
-
       return loanId
     } catch (err: unknown) {
+      await client.query('ROLLBACK').catch(() => {
+        // Ignora erro
+      })
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'ADD LOAN: '
       })
+    } finally {
+      client.release()
     }
   }
 
@@ -94,9 +90,8 @@ export class LoanService {
       await client.query('BEGIN')
 
       const loanId = await this.loanRepository.finishLoan(id, date, client)
-
       if (!loanId) {
-        return Result.fail('not-found')
+        throw new Error('not-found')
       }
 
       await this.bookRepository.updateStatus(
@@ -106,12 +101,21 @@ export class LoanService {
       )
 
       await client.query('COMMIT')
-
       return Result.void()
     } catch (err: unknown) {
-      throw BaseException.fromUnknown(err, {
-        messagePrefix: 'ADD LOAN: '
+      await client.query('ROLLBACK').catch(() => {
+        // Ignora erro
       })
+
+      if (err instanceof Error && err.message === 'not-found') {
+        return Result.fail('not-found')
+      }
+
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'FINISH LOAN: '
+      })
+    } finally {
+      client.release()
     }
   }
 

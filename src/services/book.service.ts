@@ -32,64 +32,57 @@ export class BookService {
   }
 
   async add(book: CreateBookInputDTO): Promise<Result<void>> {
+    if (book.isbn && !BookValidator.validateIsbn(book.isbn)) {
+      throw new BaseException({ cause: 'ISBN inválido' })
+    }
+
     const client = await pool.connect()
 
     try {
       await client.query('BEGIN')
 
       const authorId = await this.authorService.findOrCreate(
-        {
-          name: book.author
-        },
+        { name: book.author },
         client
       )
 
-      const bookToAdd: CreateBookRepositoryDTO = {
-        ...book,
-        authorId
-      }
-
+      const bookToAdd: CreateBookRepositoryDTO = { ...book, authorId }
       const bookId = await this.bookRepository.addBook(bookToAdd, client)
 
       for (const tag of book.tags ?? []) {
         const returnedTag = await this.tagService.findOrCreate(tag, client)
-
         await this.bookRepository.addTag(bookId, returnedTag.id, client)
       }
 
       await client.query('COMMIT')
-
       return Result.void()
     } catch (err: unknown) {
+      await client.query('ROLLBACK').catch(() => {
+        // Ignora falha
+      })
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'ADD BOOK: '
       })
+    } finally {
+      client.release()
     }
   }
 
   async remove(id: number): Promise<void> {
     const results = await this.loanService.findLoansByBookId(id)
-
     if (results.length) {
       throw new BaseException({
-        cause: `Esse livro já teve empréstimos. Altere o status para 'lost no lugar`
+        cause: `Esse livro já teve empréstimos. Altere o status para 'lost' no lugar`
       })
     }
-
     await this.bookRepository.removeBook(id)
   }
 
   async getPage(page: number, pageSize: number) {
     const offset = (page - 1) * pageSize
-
     const books = await this.bookRepository.list(pageSize, offset)
     const total = await this.bookRepository.count()
-
-    return {
-      books,
-      totalPages: Math.ceil(total / pageSize),
-      page
-    }
+    return { books, totalPages: Math.ceil(total / pageSize), page }
   }
 
   async findMetadata(isbn: string) {
@@ -106,28 +99,21 @@ export class BookService {
     client?: PoolClient
   ): Promise<BookSearchResult[]> {
     if (!BookValidator.validateIsbn(isbn)) {
-      throw new BaseException({
-        cause: 'ISBN inválido'
-      })
+      throw new BaseException({ cause: 'ISBN inválido' })
     }
-
     return this.bookRepository.searchByIsbn(isbn, client)
   }
 
   async searchByTitle(title: string): Promise<BookSearchResult[]> {
     if (!BookValidator.validateTitle(title)) {
-      throw new BaseException({
-        cause: 'Título inválido'
-      })
+      throw new BaseException({ cause: 'Título inválido' })
     }
     return this.bookRepository.searchByTitle(title)
   }
 
   async searchByAuthor(author: string): Promise<BookSearchResult[]> {
     if (!BookValidator.validadeAuthor(author)) {
-      throw new BaseException({
-        cause: 'Autor inválido'
-      })
+      throw new BaseException({ cause: 'Autor inválido' })
     }
     return this.bookRepository.searchByAuthor(author)
   }
@@ -153,12 +139,7 @@ export class BookService {
 
       const authorName = info.author
 
-      await this.authorService.findOrCreate(
-        {
-          name: authorName
-        },
-        client
-      )
+      await this.authorService.findOrCreate({ name: authorName }, client)
 
       await this.bookRepository.update(
         id,
@@ -170,11 +151,11 @@ export class BookService {
       )
 
       if (info.tagNames.length) {
-        const tags = await Promise.all(
-          info.tagNames.map((tagName) =>
-            this.tagService.findOrCreate(tagName, client)
-          )
-        )
+        const tags = []
+        for (const tagName of info.tagNames) {
+          const tag = await this.tagService.findOrCreate(tagName, client)
+          tags.push(tag)
+        }
 
         await this.bookRepository.replaceTags(
           id,
@@ -186,9 +167,14 @@ export class BookService {
       await client.query('COMMIT')
       return Result.void()
     } catch (err: unknown) {
-      throw BaseException.fromUnknown(err, {
-        messagePrefix: 'ADD BOOK: '
+      await client.query('ROLLBACK').catch(() => {
+        // Ignora falha
       })
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'EDIT BOOK: '
+      })
+    } finally {
+      client.release()
     }
   }
 }

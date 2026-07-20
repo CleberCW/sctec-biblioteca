@@ -18,8 +18,6 @@ export class BookEditView extends BookFormView {
   private async renderPage(): Promise<void> {
     this.display('\n=== Editar Livro ===\n')
 
-    console.log(this.book.tags)
-
     const book: EditBookInputDTO = {
       isbn: this.book.isbn ?? undefined,
       title: this.book.title,

@@ -23,32 +23,22 @@ export class UserService {
 
   async remove(id: number): Promise<Result<number, 'not-found'>> {
     const userId = await this.userRepository.removeUser(id)
-
     if (!userId) {
       return Result.fail('not-found')
     }
-
     return Result.ok(userId)
   }
 
   async getPage(page: number, pageSize: number) {
     const offset = (page - 1) * pageSize
-
     const users = await this.userRepository.list(pageSize, offset)
     const total = await this.userRepository.count()
-
-    return {
-      users,
-      totalPages: Math.ceil(total / pageSize),
-      page
-    }
+    return { users, totalPages: Math.ceil(total / pageSize), page }
   }
 
   async searchByCpf(cpf: string, client?: PoolClient): Promise<User | null> {
     if (!UserValidator.validateCpf(cpf)) {
-      throw new BaseException({
-        cause: 'CPF inválido'
-      })
+      throw new BaseException({ cause: 'CPF inválido' })
     }
     return this.userRepository.searchByCpf(cpf, client)
   }
@@ -59,35 +49,20 @@ export class UserService {
 
   async searchByEmail(email: string): Promise<User[]> {
     if (!UserValidator.validateEmail(email)) {
-      throw new BaseException({
-        cause: 'Email inválido'
-      })
+      throw new BaseException({ cause: 'Email inválido' })
     }
     return this.userRepository.searchByEmail(email)
   }
 
   async searchByPhone(phone: string): Promise<User[]> {
     if (!UserValidator.validatePhone(phone)) {
-      throw new BaseException({
-        cause: 'Telefone inválido'
-      })
+      throw new BaseException({ cause: 'Telefone inválido' })
     }
     return this.userRepository.searchByPhone(phone)
   }
 
   async searchById(id: number, client?: PoolClient): Promise<User | null> {
-    const db = client ?? pool
-
-    const result = await db.query<User>(
-      `
-    SELECT *
-    FROM users
-    WHERE id = $1;
-    `,
-      [id]
-    )
-
-    return result.rows[0] ?? null
+    return this.userRepository.searchById(id, client)
   }
 
   async editUser(
@@ -95,7 +70,6 @@ export class UserService {
     info: EditUserInputDTO
   ): Promise<Result<void, 'not-found'>> {
     const current = await this.userRepository.searchById(id)
-
     if (!current) {
       return Result.fail('not-found')
     }
@@ -104,15 +78,13 @@ export class UserService {
 
     try {
       await client.query('BEGIN')
-
       await this.userRepository.update(id, info, client)
-
       await client.query('COMMIT')
-
       return Result.void()
     } catch (err: unknown) {
-      await client.query('ROLLBACK')
-
+      await client.query('ROLLBACK').catch(() => {
+        //Ignora erro
+      })
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'EDIT USER: '
       })

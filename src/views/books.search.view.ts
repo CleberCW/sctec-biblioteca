@@ -82,7 +82,6 @@ export class BooksSearchView extends ConsoleView {
   }
 
   private formatBooks(b: BookSearchResult): string {
-    console.log(b)
     return [
       String(b.id).padEnd(6),
       b.title.slice(0, 60).padEnd(60),

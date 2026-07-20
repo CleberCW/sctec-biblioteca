@@ -143,12 +143,12 @@ export class BooksPostgresRepository implements BookRepository {
       const db = client ?? pool
       const result = await db.query<BookSearchResult>(
         `SELECT
-        b.*
-        a.name AS author,
-        FROM books b
-        JOIN authors a
-            ON a.id = b.author_id
-        WHERE b.isbn = $1;`,
+      b.*,
+      a.name AS author
+   FROM books b
+   JOIN authors a
+     ON a.id = b.author_id
+   WHERE b.isbn = $1;`,
         [isbn]
       )
 

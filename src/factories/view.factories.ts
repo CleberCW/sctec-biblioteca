@@ -7,6 +7,7 @@ import { BookEditView } from '../views/book.edit.view'
 import { BooksSearchView } from '../views/books.search.view'
 import { SelectBooksView } from '../views/books.select.view'
 import { LoanAddView } from '../views/loan.add.view'
+import { UserEditView } from '../views/user.edit.view'
 import { SelectUserView } from '../views/users.select.view'
 
 export class ViewFactory {
@@ -21,7 +22,7 @@ export class ViewFactory {
   }
 
   createSelectBooksView(book: BookSearchResult): SelectBooksView {
-    return new SelectBooksView(book, this)
+    return new SelectBooksView(book, this, this.bookService)
   }
 
   createBooksSearchView(): BooksSearchView {
@@ -34,5 +35,9 @@ export class ViewFactory {
 
   createEditBookView(book: BookSearchResult): BookEditView {
     return new BookEditView(book, this.bookService)
+  }
+
+  createEditUserView(user: User): UserEditView {
+    return new UserEditView(user, this.userService)
   }
 }

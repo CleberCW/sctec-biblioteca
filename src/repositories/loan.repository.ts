@@ -124,4 +124,30 @@ export class LoanPostgresRepository implements LoanRepository {
       })
     }
   }
+
+  async findByBookId(
+    bookId: number,
+    client?: PoolClient
+  ): Promise<BookLoanResult[]> {
+    const db = client ?? pool
+
+    const result = await db.query<BookLoanResult>(
+      `
+    SELECT
+      bl.*,
+      b.title,
+      u.name AS "userName"
+    FROM book_loans bl
+    JOIN books b
+      ON b.id = bl.book_id
+    JOIN users u
+      ON u.id = bl.user_id
+    WHERE bl.book_id = $1
+    ORDER BY bl.loan_date DESC;
+    `,
+      [bookId]
+    )
+
+    return result.rows
+  }
 }

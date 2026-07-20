@@ -2,6 +2,7 @@ import { PoolClient } from 'pg'
 
 import { AuthorService } from './author.service'
 import { BrasilApiIsbnProvider } from './isbn.service'
+import { LoanService } from './loan.service'
 import { TagService } from './tag.service'
 import { NativeHttpService } from '../@common/http/impl/native-http.service'
 import { Result } from '../@common/result/result'
@@ -18,7 +19,8 @@ export class BookService {
   constructor(
     private readonly bookRepository: BooksPostgresRepository,
     private readonly authorService: AuthorService,
-    private readonly tagService: TagService
+    private readonly tagService: TagService,
+    private readonly loanService: LoanService
   ) {}
 
   async list(pageSize?: number, offset?: number): Promise<BookSearchResult[]> {
@@ -65,18 +67,16 @@ export class BookService {
     }
   }
 
-  async remove(id: number): Promise<Result<void, 'not-found'>> {
-    const box = await this.bookRepository.list()
+  async remove(id: number): Promise<void> {
+    const results = await this.loanService.findLoansByBookId(id)
 
-    const exists = box.some((p) => p.id === id)
-
-    if (!exists) {
-      return Result.fail('not-found')
+    if (results.length) {
+      throw new BaseException({
+        cause: `Esse livro já teve empréstimos. Altere o status para 'lost no lugar`
+      })
     }
 
     await this.bookRepository.removeBook(id)
-
-    return Result.void()
   }
 
   async getPage(page: number, pageSize: number) {
@@ -169,9 +169,11 @@ export class BookService {
         client
       )
 
-      if (info.tags) {
+      if (info.tagNames.length) {
         const tags = await Promise.all(
-          info.tags.map((tag) => this.tagService.findOrCreate(tag.name, client))
+          info.tagNames.map((tagName) =>
+            this.tagService.findOrCreate(tagName, client)
+          )
         )
 
         await this.bookRepository.replaceTags(

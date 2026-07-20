@@ -99,7 +99,11 @@ export class LoanService {
         return Result.fail('not-found')
       }
 
-      await this.bookRepository.updateStatus(bookId, BookStatus.LOANED, client)
+      await this.bookRepository.updateStatus(
+        bookId,
+        BookStatus.AVAILABLE,
+        client
+      )
 
       await client.query('COMMIT')
 
@@ -109,5 +113,9 @@ export class LoanService {
         messagePrefix: 'ADD LOAN: '
       })
     }
+  }
+
+  async findLoansByBookId(bookId: number): Promise<BookLoanResult[]> {
+    return this.loanRepository.findByBookId(bookId)
   }
 }

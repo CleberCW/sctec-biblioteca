@@ -49,7 +49,12 @@ function bootstrap() {
   )
   const tagService = new TagService(tagRepository)
 
-  const bookService = new BookService(bookRepository, authorService, tagService)
+  const bookService = new BookService(
+    bookRepository,
+    authorService,
+    tagService,
+    loanService
+  )
 
   const viewFactory = new ViewFactory(bookService, userService, loanService)
 

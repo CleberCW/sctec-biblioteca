@@ -89,7 +89,7 @@ export class BooksSearchView extends ConsoleView {
       b.status.slice(0, 20).padEnd(20),
       b.author.slice(0, 20).padEnd(20),
       (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50),
-      (b.tags ?? '').slice(0, 50).padEnd(50)
+      (b.tags ?? 'N/A').slice(0, 50).padEnd(50)
     ].join(' | ')
   }
 

@@ -31,7 +31,7 @@ export class SelectUserView extends ConsoleView {
         break
 
       case '2':
-        this.editUser()
+        await this.editUser()
         break
 
       case '3':
@@ -51,9 +51,11 @@ export class SelectUserView extends ConsoleView {
     await this.viewFactory.createLoanAddView().start({
       cpf: this.user.cpf
     })
+    this.exit()
   }
 
-  private editUser() {
+  private async editUser() {
+    await this.viewFactory.createEditUserView(this.user).start()
     this.exit()
   }
 

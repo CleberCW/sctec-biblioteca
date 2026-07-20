@@ -1,11 +1,13 @@
 import { ConsoleView } from './console.view'
 import { ViewFactory } from '../factories/view.factories'
 import { BookSearchResult } from '../models/BookSearchResult'
+import { BookService } from '../services/book.service'
 
 export class SelectBooksView extends ConsoleView {
   constructor(
     private readonly book: BookSearchResult,
-    private readonly viewFactory: ViewFactory
+    private readonly viewFactory: ViewFactory,
+    private readonly bookService: BookService
   ) {
     super()
   }
@@ -37,7 +39,7 @@ export class SelectBooksView extends ConsoleView {
         break
 
       case '3':
-        this.removeBook()
+        await this.removeBook()
         break
 
       case 'Q':
@@ -53,13 +55,28 @@ export class SelectBooksView extends ConsoleView {
     await this.viewFactory.createLoanAddView().start({
       bookId: String(this.book.id)
     })
+    this.exit()
   }
 
   private async editBook() {
     await this.viewFactory.createEditBookView(this.book).start()
+    this.exit()
   }
 
-  private removeBook() {
+  private async removeBook() {
+    this.display(
+      'Tem certeza que deseja remover o livro? (só é possível remover livros que não tenham tido nenhum empréstimo)'
+    )
+    this.display(`[S] Sim [N] Não\n`)
+
+    const option = await this.prompt('Digite a opção: ')
+
+    if (option.toUpperCase() === 'S') {
+      await this.bookService.remove(this.book.id)
+      this.display('Livro removido com sucesso')
+      await this.prompt('Pressione ENTER para cotinuar')
+    }
+
     this.exit()
   }
 

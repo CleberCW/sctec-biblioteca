@@ -5,6 +5,7 @@ import { CreateUserDTO } from '../dtos/CreateUserDTO'
 import { BaseException } from '../errors/base.exception'
 import { User } from '../models/User'
 import { UserRepository } from './domain/repository'
+import { EditUserInputDTO } from '../dtos/EditUserDTO'
 
 export class UserPostgresRepository implements UserRepository {
   async list(pageSize = 0, offset = 10): Promise<User[]> {
@@ -150,6 +151,57 @@ export class UserPostgresRepository implements UserRepository {
     } catch (err: unknown) {
       throw BaseException.fromUnknown(err, {
         messagePrefix: 'DELETE AUTHOR: '
+      })
+    }
+  }
+
+  async searchById(id: number, client?: PoolClient): Promise<User | null> {
+    try {
+      const db = client ?? pool
+
+      const result = await db.query<User>(
+        `
+      SELECT *
+      FROM users
+      WHERE id = $1;
+      `,
+        [id]
+      )
+
+      return result.rows[0] ?? null
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'SEARCH USER BY ID: '
+      })
+    }
+  }
+
+  async update(
+    id: number,
+    info: EditUserInputDTO,
+    client?: PoolClient
+  ): Promise<number | null> {
+    try {
+      const db = client ?? pool
+
+      const result = await db.query<{ id: number }>(
+        `
+      UPDATE users
+      SET
+        cpf = $2,
+        name = $3,
+        phone = $4,
+        email = $5
+      WHERE id = $1
+      RETURNING id;
+      `,
+        [id, info.cpf, info.name, info.phone, info.email]
+      )
+
+      return result.rows[0]?.id ?? null
+    } catch (err: unknown) {
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'UPDATE USER: '
       })
     }
   }

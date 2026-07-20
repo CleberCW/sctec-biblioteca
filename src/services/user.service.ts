@@ -1,7 +1,9 @@
 import { PoolClient } from 'pg'
 
 import { Result } from '../@common/result/result'
+import { pool } from '../config/db'
 import { CreateUserDTO } from '../dtos/CreateUserDTO'
+import { EditUserInputDTO } from '../dtos/EditUserDTO'
 import { BaseException } from '../errors/base.exception'
 import { User } from '../models/User'
 import { UserPostgresRepository } from '../repositories/user.repository'
@@ -71,5 +73,51 @@ export class UserService {
       })
     }
     return this.userRepository.searchByPhone(phone)
+  }
+
+  async searchById(id: number, client?: PoolClient): Promise<User | null> {
+    const db = client ?? pool
+
+    const result = await db.query<User>(
+      `
+    SELECT *
+    FROM users
+    WHERE id = $1;
+    `,
+      [id]
+    )
+
+    return result.rows[0] ?? null
+  }
+
+  async editUser(
+    id: number,
+    info: EditUserInputDTO
+  ): Promise<Result<void, 'not-found'>> {
+    const current = await this.userRepository.searchById(id)
+
+    if (!current) {
+      return Result.fail('not-found')
+    }
+
+    const client = await pool.connect()
+
+    try {
+      await client.query('BEGIN')
+
+      await this.userRepository.update(id, info, client)
+
+      await client.query('COMMIT')
+
+      return Result.void()
+    } catch (err: unknown) {
+      await client.query('ROLLBACK')
+
+      throw BaseException.fromUnknown(err, {
+        messagePrefix: 'EDIT USER: '
+      })
+    } finally {
+      client.release()
+    }
   }
 }

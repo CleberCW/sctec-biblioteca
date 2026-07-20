@@ -18,6 +18,8 @@ export class BookEditView extends BookFormView {
   private async renderPage(): Promise<void> {
     this.display('\n=== Editar Livro ===\n')
 
+    console.log(this.book.tags)
+
     const book: EditBookInputDTO = {
       isbn: this.book.isbn ?? undefined,
       title: this.book.title,
@@ -27,13 +29,17 @@ export class BookEditView extends BookFormView {
       edition: this.book.edition ?? undefined,
       num_pages: this.book.num_pages ?? undefined,
       status: this.book.status,
-      condition: this.book.condition
+      condition: this.book.condition,
+      tagNames: this.book.tags
+        ? this.book.tags.split(',').map((tag) => tag.trim())
+        : []
     }
 
     await this.fillBookData(book)
 
     book.condition = await this.askCondition(book.condition)
     book.status = await this.askStatus(book.status)
+    book.tagNames = await this.askTags(book.tagNames.map((tag) => tag))
 
     await this.confirmBook(book)
   }
@@ -109,6 +115,34 @@ export class BookEditView extends BookFormView {
     }
   }
 
+  private async askTags(current: string[] = []): Promise<string[]> {
+    for (;;) {
+      const input = (
+        await this.prompt(
+          `Tags${current.length ? ` [${current.join(', ')}]` : ''} (separadas por vírgula): `
+        )
+      ).trim()
+
+      this.checkCancelled(input)
+
+      if (input === '') {
+        return current
+      }
+
+      const tags = input
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== '')
+
+      if (tags.length === 0) {
+        this.display('Informe ao menos uma tag válida.')
+        continue
+      }
+
+      return [...new Set(tags)]
+    }
+  }
+
   private async confirmBook(info: EditBookInputDTO): Promise<void> {
     this.display(`
         =============================================================
@@ -121,6 +155,7 @@ export class BookEditView extends BookFormView {
         Edição: ${String(info.edition ?? 'N/A')},
         Número de páginas: ${String(info.num_pages ?? 'N/A')},
         Condição: ${info.condition}
+        Tags: ${info.tagNames.length ? info.tagNames.join(', ') : 'N/A'}
         Status: ${info.status}
 
         =============================================================

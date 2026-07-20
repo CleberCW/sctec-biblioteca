@@ -50,7 +50,7 @@ export class BooksListView extends PaginatedConsoleView<
       (book.isbn ?? 'Sem ISBN').padEnd(20),
       book.author.slice(0, 20).padEnd(20),
       (book.description ?? 'Sem descrição').slice(0, 50).padEnd(50),
-      (book.tags ?? 'Sem tags').slice(0, 50).padEnd(50)
+      (book.tags ?? 'N/A').slice(0, 50).padEnd(50)
     ].join(' | ')
   }
 

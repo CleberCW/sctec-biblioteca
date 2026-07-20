@@ -1,6 +1,5 @@
 import { BookCondition } from '../enums/BookCondition'
 import { BookStatus } from '../enums/BookStatus'
-import { Tag } from '../models/Tag'
 
 export interface EditBookInputDTO {
   isbn?: string
@@ -12,5 +11,5 @@ export interface EditBookInputDTO {
   num_pages?: number
   status: BookStatus
   condition: BookCondition
-  tags?: Tag[]
+  tagNames: string[]
 }

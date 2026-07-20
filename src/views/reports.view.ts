@@ -15,15 +15,26 @@ export class ReportsView extends ConsoleView {
     super()
   }
 
+  private dateNow = new Date()
+
   private formatLoan(l: BookLoanResult): string {
     return [
       String(l.id).padEnd(6),
       l.title.slice(0, 40).padEnd(40),
       l.userName.slice(0, 25).padEnd(25),
       l.loan_date.toLocaleDateString('pt-BR').padEnd(12),
-      l.due_date.toLocaleDateString('pt-BR').padEnd(12)
+      l.due_date.toLocaleDateString('pt-BR').padEnd(12),
+      l.due_date < this.dateNow ? 'ATRASADO' : ''
     ].join(' | ')
   }
+
+  private readonly loanHeader = [
+    'ID'.padEnd(6),
+    'Título'.padEnd(40),
+    'Usuário'.padEnd(25),
+    'Empréstimo'.padEnd(12),
+    'Prazo'.padEnd(12)
+  ].join(' | ')
 
   private formatBooks(b: BookSearchResult): string {
     return [
@@ -31,9 +42,7 @@ export class ReportsView extends ConsoleView {
       b.title.slice(0, 60).padEnd(60),
       (b.isbn ?? 'Sem ISBN').padEnd(20),
       b.status.slice(0, 20).padEnd(20),
-      b.author.slice(0, 20).padEnd(20),
-      (b.description ?? 'Sem descrição').slice(0, 50).padEnd(50),
-      (b.tags ?? '').slice(0, 50).padEnd(50)
+      b.author.slice(0, 20).padEnd(20)
     ].join(' | ')
   }
 
@@ -44,7 +53,10 @@ export class ReportsView extends ConsoleView {
   }
 
   private async renderLoans(): Promise<void> {
-    const loans = await this.loanService.list()
+    const loans = await this.loanService.list({ notReturned: true })
+
+    this.display(this.loanHeader)
+    this.display('='.repeat(this.loanHeader.length))
 
     if (loans.length === 0) {
       this.display('Nenhum empréstimo ativo.')
@@ -55,6 +67,7 @@ export class ReportsView extends ConsoleView {
     loans.forEach((loan) => {
       this.display(this.formatLoan(loan))
     })
+    this.display('\n')
 
     await this.prompt('Pressione ENTER para continuar:')
   }

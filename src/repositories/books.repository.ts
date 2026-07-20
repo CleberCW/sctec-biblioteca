@@ -135,6 +135,17 @@ export class BooksPostgresRepository implements BookRepository {
     }
   }
 
+  private readonly BOOK_SELECT = `
+    SELECT
+        b.*,
+        a.name AS author,
+        string_agg(t.name, ', ') AS tags
+    FROM books b
+    JOIN authors a ON a.id = b.author_id
+    LEFT JOIN book_tags bt ON bt.book_id = b.id
+    LEFT JOIN tags t ON t.id = bt.tag_id
+    `
+
   async searchByIsbn(
     isbn: string,
     client?: PoolClient
@@ -142,13 +153,9 @@ export class BooksPostgresRepository implements BookRepository {
     try {
       const db = client ?? pool
       const result = await db.query<BookSearchResult>(
-        `SELECT
-      b.*,
-      a.name AS author
-   FROM books b
-   JOIN authors a
-     ON a.id = b.author_id
-   WHERE b.isbn = $1;`,
+        `${this.BOOK_SELECT}
+      WHERE b.isbn = $1
+      GROUP BY b.id, a.name`,
         [isbn]
       )
 
@@ -168,13 +175,9 @@ export class BooksPostgresRepository implements BookRepository {
       const db = client ?? pool
       const result = await db.query<BookSearchResult>(
         `
-      SELECT
-        b.*,
-        a.name AS author
-      FROM books b
-      JOIN authors a
-          ON a.id = b.author_id
-      WHERE b.id = $1;`,
+      ${this.BOOK_SELECT}
+      WHERE b.id = $1
+      GROUP BY b.id, a.name;`,
         [id]
       )
 
@@ -190,16 +193,12 @@ export class BooksPostgresRepository implements BookRepository {
     try {
       const result = await pool.query<BookSearchResult>(
         `
-      SELECT
-        b.*,
-        a.name AS author,
-        similarity(b.title, $1) AS score
-      FROM books b
-      JOIN authors a ON a.id = b.author_id
+      ${this.BOOK_SELECT}
       WHERE
         b.title ILIKE '%' || $1 || '%'
         OR b.title % $1
-      ORDER BY score DESC;
+      GROUP BY b.id, a.name
+      ORDER BY similarity(a.name, $1) DESC;
       `,
         [title]
       )
@@ -216,15 +215,11 @@ export class BooksPostgresRepository implements BookRepository {
     try {
       const result = await pool.query<BookSearchResult>(
         `
-      SELECT
-          b.*,
-          a.name AS author,
-          similarity(a.name, $1) AS score
-      FROM books b
-      JOIN authors a ON a.id = b.author_id
+      ${this.BOOK_SELECT}
       WHERE
           a.name ILIKE '%' || $1 || '%'
           OR a.name % $1
+      GROUP BY b.id, a.name
       ORDER BY
           similarity(a.name, $1) DESC;
       `,
@@ -243,17 +238,7 @@ export class BooksPostgresRepository implements BookRepository {
     try {
       const result = await pool.query<BookSearchResult>(
         `
-      SELECT
-          b.*,
-          a.name AS author,
-          string_agg(t.name, ', ' ORDER BY t.name) AS tags
-      FROM books b
-      JOIN authors a
-          ON a.id = b.author_id
-      JOIN book_tags bt
-          ON bt.book_id = b.id
-      JOIN tags t
-          ON t.id = bt.tag_id
+      ${this.BOOK_SELECT}
       WHERE EXISTS (
           SELECT 1
           FROM book_tags bt2

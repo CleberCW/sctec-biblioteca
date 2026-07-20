@@ -11,12 +11,15 @@ export class LoansListView extends PaginatedConsoleView<
     super()
   }
 
+  private dateNow = new Date()
+
   private readonly header = [
     'ID'.padEnd(6),
     'Nome do usuário'.padEnd(40),
     'Título'.padEnd(40),
     'Data de empréstimo'.padEnd(30),
-    'Data prevista para devolução'.padEnd(30)
+    'Data limite para devolução'.padEnd(30),
+    'Status'.padEnd(20)
   ].join(' | ')
 
   protected override async fetchPage(
@@ -44,7 +47,9 @@ export class LoansListView extends PaginatedConsoleView<
       b.userName.slice(0, 40).padEnd(40),
       b.title.slice(0, 40).padEnd(40),
       b.loan_date.toLocaleDateString('pt-BR').slice(0, 30).padEnd(30),
-      b.due_date.toLocaleDateString('pt-BR').slice(0, 30).padEnd(30)
+      b.due_date.toLocaleDateString('pt-BR').slice(0, 30).padEnd(30),
+      (b.returned_at ? 'Devolvido' : 'Emprestado').padEnd(20),
+      b.due_date < this.dateNow ? 'ATRASADO' : ''
     ].join(' | ')
   }
 

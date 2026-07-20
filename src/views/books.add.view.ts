@@ -92,7 +92,15 @@ export class BooksAddView extends BookFormView {
 
     switch (option.trim().toUpperCase()) {
       case 'C':
-        await this.bookService.add(book)
+        try {
+          await this.bookService.add(book)
+        } catch (err) {
+          if (err instanceof Error) {
+            this.display(err.message)
+          }
+
+          await this.prompt('Pressione ENTER para continuar:')
+        }
         this.display('Livro cadastrado com sucesso!')
         await this.prompt('Pressione ENTER para continuar:')
         this.exit()

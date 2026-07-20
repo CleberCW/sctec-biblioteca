@@ -97,23 +97,23 @@ export class BookService {
   async searchByIsbn(
     isbn: string,
     client?: PoolClient
-  ): Promise<BookSearchResult[]> {
+  ): Promise<BookSearchResult[] | null> {
     if (!BookValidator.validateIsbn(isbn)) {
-      throw new BaseException({ cause: 'ISBN inválido' })
+      return null
     }
     return this.bookRepository.searchByIsbn(isbn, client)
   }
 
-  async searchByTitle(title: string): Promise<BookSearchResult[]> {
+  async searchByTitle(title: string): Promise<BookSearchResult[] | null> {
     if (!BookValidator.validateTitle(title)) {
-      throw new BaseException({ cause: 'Título inválido' })
+      return null
     }
     return this.bookRepository.searchByTitle(title)
   }
 
-  async searchByAuthor(author: string): Promise<BookSearchResult[]> {
+  async searchByAuthor(author: string): Promise<BookSearchResult[] | null> {
     if (!BookValidator.validadeAuthor(author)) {
-      throw new BaseException({ cause: 'Autor inválido' })
+      return null
     }
     return this.bookRepository.searchByAuthor(author)
   }
@@ -157,11 +157,9 @@ export class BookService {
           tags.push(tag)
         }
 
-        await this.bookRepository.replaceTags(
-          id,
-          tags.map((tag) => tag.id),
-          client
-        )
+        const tagIds = [...new Set(tags.map((tag) => tag.id))]
+
+        await this.bookRepository.replaceTags(id, tagIds, client)
       }
 
       await client.query('COMMIT')

@@ -7,13 +7,17 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "start:dev": "tsc && tsx --watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "start:dev": "tsx watch src/main.ts",
     "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "db:seed": "tsx src/config/seed.ts",
     "db:start": "docker compose -f postgres/docker-compose.yml up -d",
     "db:stop": "docker compose -f postgres/docker-compose.yml down",
+    "db:restart": "npm run db:stop && npm run db:start",
     "db:logs": "docker compose -f postgres/docker-compose.yml logs -f"
   },
   "keywords": [],
